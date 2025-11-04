@@ -57,25 +57,36 @@ class DL_LootSystem : WorldSystem
 	};
 	
 		
-	[Attribute("1.5", UIWidgets.Auto, desc: "Multiplies spawn rate of common items (generally clothes and equipment) be?", category: "Dynamic Loot")]
-	float commonItemTypesMultiplier;
-	SCR_EArsenalItemType commonItemTypes = SCR_EArsenalItemType.HEAL
-		| SCR_EArsenalItemType.WEAPON_ATTACHMENT
-		| SCR_EArsenalItemType.TORSO
-		| SCR_EArsenalItemType.LEGS
-		| SCR_EArsenalItemType.FOOTWEAR
-		| SCR_EArsenalItemType.HANDWEAR
-		| SCR_EArsenalItemType.EQUIPMENT;
+	[Attribute("3.0", UIWidgets.Auto, desc: "Multiplies spawn rate of ammo, should be at least be enough to negate uncommonItemTypesMultiplier so magazines are more common than scopes and suppressors", category: "Dynamic Loot")]
+	float ammoMultiplier;	
+		
+	[Attribute("0.5", UIWidgets.Auto, desc: "Multiplies spawn rate of attachments, if modded attachments are too common try decreasing this or increasing their individual arsenal values", category: "Dynamic Loot")]
+	float attachmentMultiplier;
 	
-	[Attribute("0.5", UIWidgets.Auto, desc: "Multiplies spawn rate of uncommon items (generally guns and explosives) be?", category: "Dynamic Loot")]
+	[Attribute("1.25", UIWidgets.Auto, desc: "Multiplies spawn rate of common items (generally clothes and equipment)", category: "Dynamic Loot")]
+	float commonItemTypesMultiplier;
+	ref array <SCR_EArsenalItemType> commonItemTypes = {
+		SCR_EArsenalItemType.HEAL,
+		SCR_EArsenalItemType.WEAPON_ATTACHMENT,
+		SCR_EArsenalItemType.TORSO,
+		SCR_EArsenalItemType.LEGS,
+		SCR_EArsenalItemType.FOOTWEAR,
+		SCR_EArsenalItemType.HANDWEAR,
+		SCR_EArsenalItemType.EQUIPMENT,
+		SCR_EArsenalItemType.PISTOL
+	};
+	
+	[Attribute("0.75", UIWidgets.Auto, desc: "Multiplies spawn rate of uncommon items (generally guns and explosives)", category: "Dynamic Loot")]
 	float uncommonItemTypesMultiplier;
-	SCR_EArsenalItemType uncommonItemTypes = SCR_EArsenalItemType.RIFLE
-		| SCR_EArsenalItemType.WEAPON_ATTACHMENT
-		| SCR_EArsenalItemType.EXPLOSIVES
-		| SCR_EArsenalItemType.ROCKET_LAUNCHER
-		| SCR_EArsenalItemType.SNIPER_RIFLE
-		| SCR_EArsenalItemType.MACHINE_GUN
-		| SCR_EArsenalItemType.LETHAL_THROWABLE;
+	ref array<SCR_EArsenalItemType> uncommonItemTypes = {
+		SCR_EArsenalItemType.RIFLE,
+		SCR_EArsenalItemType.WEAPON_ATTACHMENT,
+		SCR_EArsenalItemType.EXPLOSIVES,
+		SCR_EArsenalItemType.ROCKET_LAUNCHER,
+		SCR_EArsenalItemType.SNIPER_RIFLE,
+		SCR_EArsenalItemType.MACHINE_GUN,
+		SCR_EArsenalItemType.LETHAL_THROWABLE
+	};
 	
 	SCR_EArsenalItemType itemBlacklist = SCR_EArsenalItemType.MORTARS | SCR_EArsenalItemType.HELICOPTER | SCR_EArsenalItemType.VEHICLE;
 	
@@ -276,13 +287,18 @@ class DL_LootSystem : WorldSystem
 				item.PostInitData(entry);
 			
 			value = Math.Max(item.GetSupplyCost(SCR_EArsenalSupplyCostType.DEFAULT) + item.GetSupplyCost(SCR_EArsenalSupplyCostType.GADGET_ARSENAL), 1);
-
 						
-			if (itemType == commonItemTypes)
-				value = value * commonItemTypesMultiplier;
+			if (commonItemTypes.Contains(itemType))
+				value = value / commonItemTypesMultiplier;
 			
-			if (itemType == uncommonItemTypes)
+			if (uncommonItemTypes.Contains(itemType))
 				value = value / uncommonItemTypesMultiplier;
+			
+			if (itemMode == SCR_EArsenalItemMode.AMMUNITION && itemType != SCR_EArsenalItemType.MACHINE_GUN)
+				value = value / ammoMultiplier;	
+					
+			if (itemMode == SCR_EArsenalItemMode.ATTACHMENT)
+				value = value / attachmentMultiplier;
 			
 			// base item rarity of inverse of supply cost % of 1k
 			// e.g.
