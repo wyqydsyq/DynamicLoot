@@ -7,7 +7,7 @@ class DL_LootSystem : WorldSystem
 	[Attribute("false", UIWidgets.Auto, desc: "Enable creation of dynamic loot spawners. With this off the loot EntityCatalogs will still be processed for anything else that needs them, but loot spawners will not be added to prefabs", category: "Dynamic Loot/Loot")]
 	bool enableLootSpawning;
 	
-	[Attribute("5.0", UIWidgets.Auto, desc: "Amplifies scarcity gap between low and high value gear, 5.0 works well for vanilla where few items are >200 supply, if high-end modded gear is too common try increasing this value", category: "Dynamic Loot/Loot")]
+	[Attribute("2.5", UIWidgets.Auto, desc: "Amplifies scarcity gap between low and high value gear, 2.5 works well for vanilla where few items are >200 supply, if high-end modded gear is too common try increasing this value", category: "Dynamic Loot/Loot")]
 	float scarcityMultiplier;
 	
 	[Attribute("20", UIWidgets.Auto, desc: "Max items to spawn per container, setting this too high may cause performance issues.", category: "Dynamic Loot/Loot")]
@@ -260,18 +260,23 @@ class DL_LootSystem : WorldSystem
 		{
 			float value = 1;
 			SCR_ArsenalItem item = SCR_ArsenalItem.Cast(entry.GetEntityDataOfType(SCR_ArsenalItem));
-			if (item)
-				value = Math.Max(item.GetSupplyCost(SCR_EArsenalSupplyCostType.GADGET_ARSENAL), 1);
-			
 			if (!item)
 				continue;
 			
 			SCR_EArsenalItemType itemType = item.GetItemType();
-			if (!itemType)
+			if (!itemType || itemType == itemBlacklist)
 				continue;
 			
-			if (itemType == itemBlacklist)
-				continue;
+			SCR_EArsenalItemMode itemMode = item.GetItemMode();
+			if (
+				itemMode == SCR_EArsenalItemMode.WEAPON ||
+				itemMode == SCR_EArsenalItemMode.WEAPON_VARIANTS ||
+				itemMode == SCR_EArsenalItemMode.ATTACHMENT
+			)
+				item.PostInitData(entry);
+			
+			value = Math.Max(item.GetSupplyCost(SCR_EArsenalSupplyCostType.DEFAULT) + item.GetSupplyCost(SCR_EArsenalSupplyCostType.GADGET_ARSENAL), 1);
+
 						
 			if (itemType == commonItemTypes)
 				value = value * commonItemTypesMultiplier;
@@ -286,6 +291,8 @@ class DL_LootSystem : WorldSystem
 			// 100 - (320 supply) / 1000 * 100 = 67 weight
 			float weight = 100 - (Math.Min(Math.Max(value, 1) * scarcityMultiplier, 999) / 1000 * 100);
 			data.Insert(entry, weight);
+			
+			PrintFormat("DL_LootSystem: Item %1 calculated value of %2, weight of %3", entry, value, weight);
 		}
 
 		if (data.IsEmpty())
