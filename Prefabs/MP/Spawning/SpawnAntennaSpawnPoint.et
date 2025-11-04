@@ -1,0 +1,20 @@
+SCR_RadioVehicleSpawnPoint : "{E7F4D5562F48DDE4}Prefabs/MP/Spawning/SpawnPoint_Base.et" {
+ ID "544EB04DCBFBD126"
+ components {
+  SCR_MapDescriptorComponent "{54C659A97C47BDE2}" {
+   VisibleOnMap 1
+  }
+  SCR_ShowHideInEditorComponent "{66C6A8DB0214A378}" {
+   m_eShowHideInEditor 9
+  }
+  SCR_SpawnPointAreaMeshComponent "{66C6A8DB0214A371}" {
+   m_vResolution 48
+   m_bStretchMaterial 1
+   m_Material "{0A8FAD171DB3DC49}Assets/Editor/VirtualArea/VirtualArea_01_Focused.emat"
+  }
+ }
+ coords 1242.645 50.937 1301.018
+ m_sFaction ""
+ m_Info SCR_UIInfo "{66C6A8DB0214A30A}" {
+ }
+}

@@ -1,0 +1,25 @@
+GameProject {
+ ID "DynamicLoot"
+ GUID "66B2F0B008DC590F"
+ TITLE "DynamicLoot"
+ Dependencies {
+  "58D0FB3206B6F859"
+ }
+ Configurations {
+  GameProjectConfig PC {
+   SystemModuleSettings SystemModuleSettings "{5F10A1570304557B}" {
+    DefaultConfig "{7C9E720397CC6ACD}Configs/Systems/ConflictSystems.conf"
+   }
+  }
+  GameProjectConfig XBOX_ONE {
+  }
+  GameProjectConfig XBOX_SERIES {
+  }
+  GameProjectConfig PS4 {
+  }
+  GameProjectConfig PS5 {
+  }
+  GameProjectConfig HEADLESS {
+  }
+ }
+}

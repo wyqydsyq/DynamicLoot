@@ -1,0 +1,79 @@
+DL_LootSpawn {
+ ID "66B435AB97166CCC"
+ components {
+  MeshObject "{66B629C91EFE1BEB}" {
+  }
+  SCR_UniversalInventoryStorageComponent "{66B435AB05952A0E}" {
+   Attributes SCR_ItemAttributeCollection "{66B435AB06E4BFD8}" {
+    ItemDisplayName SCR_InventoryUIInfo "{58A17A3474A3430E}" {
+     Name "Loot"
+     Description "Loot"
+     m_bShowIconInInventory 0
+     m_aItemHints {
+      SCR_SupplyAvailableItemHintUIInfo "{5E76A7E6F3D189F7}" {
+      }
+     }
+    }
+    ItemPhysAttributes ItemPhysicalAttributes "{66B56D00E4F89154}" {
+     SizeSetupStrategy Volume
+     ActivePhysicalSimulation None
+    }
+    CustomAttributes {
+     PreviewRenderAttributes "{599E60F5A7F31EE8}" {
+     }
+    }
+    m_Size SLOT_3x3
+    m_eQuickSlotSize SLOT_3x3
+    m_SlotType SLOT_ANY
+    m_bDraggable 1
+    m_bVisible 0
+    m_bStackable 0
+    m_bRefundable 0
+   }
+   StoragePurpose 0x6e 0
+   UseCapacityCoefficient 0
+   MaxCumulativeVolume 10000000
+   MaxItemSize 10000 10000 10000
+   m_fMaxWeight 10000
+  }
+  ActionsManagerComponent "{66B435AB594BD5DC}" {
+   ActionContexts {
+    UserActionContext "{66B435AB5CB206D4}" {
+     UIInfo UIInfo "{66B435AB5E654BDB}" {
+      Name "Loot"
+     }
+     ContextName "default"
+     Position PointInfo "{66B435AB718DF2AA}" {
+     }
+     Radius 3
+     Height 1
+    }
+   }
+   additionalActions {
+    SCR_OpenStorageAction "{66B44225212DC1F6}" {
+     ParentContextList {
+      "default"
+     }
+     UIInfo UIInfo "{66B4818436AF070D}" {
+      Name "Loot"
+     }
+     Duration 0.5
+    }
+   }
+   AllowCrossHierarchy 1
+   IsGhostEntity 1
+  }
+  RplComponent "{66B435AB029FF950}" {
+   AutoHierarchy 1
+   RuntimeOnly 1
+  }
+  Hierarchy "{66B435AB92FD3A73}" {
+  }
+ }
+ Flags 0x100 0
+ editor EntityEditorProps "{66B4818B3046012D}" {
+  Style box
+  DynamicBox 1
+ }
+ coords 2783.39 25.054 5649.595
+}

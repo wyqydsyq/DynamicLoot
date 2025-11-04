@@ -1,0 +1,8 @@
+GenericEntity {
+ ID "F0DBA538AC2A0552"
+ components {
+  DL_LootSpawnComponent "{66B442257E6A201D}" {
+  }
+ }
+ Flags 0x100 0
+}
