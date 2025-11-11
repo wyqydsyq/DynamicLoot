@@ -52,7 +52,7 @@ class DL_LootSpawn : GenericEntity
 		/*if (categoryFilter && itemType != categoryFilter)
 			return false;*/
 		
-		if (sys.itemBlacklist == itemType)
+		if (sys.itemBlacklist.Contains(itemType))
 			return false;
 		
 		ResourceName prefab = entry.GetPrefab();

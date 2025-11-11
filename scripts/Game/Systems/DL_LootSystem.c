@@ -88,13 +88,24 @@ class DL_LootSystem : WorldSystem
 		SCR_EArsenalItemType.LETHAL_THROWABLE
 	};
 	
-	SCR_EArsenalItemType itemBlacklist = SCR_EArsenalItemType.MORTARS | SCR_EArsenalItemType.HELICOPTER | SCR_EArsenalItemType.VEHICLE;
+	ref array<SCR_EArsenalItemType> itemBlacklist = {
+		SCR_EArsenalItemType.MORTARS,
+		SCR_EArsenalItemType.HELICOPTER,
+		SCR_EArsenalItemType.VEHICLE
+	};
 	
 	// list of spawn components in the world, each will be checked if it should be a "lootable" and spawn a container prefab if so
 	ref array<DL_LootSpawnComponent> spawnComponents = {};
 	ref array<DL_LootSpawn> spawns = {};
+	
+	// raw weighted loot data lists of evaluated entity catalog items based on their arsenal supply costs
+	bool lootDataReady = false;
 	ref SCR_WeightedArray<SCR_EntityCatalogEntry> lootData = new SCR_WeightedArray<SCR_EntityCatalogEntry>();
+	
+	bool vehicleDataReady = false;
 	ref array<SCR_EntityCatalogEntry> vehicleData = {};
+	
+	
 	ref array<EEntityCatalogType> labels = {
 		EEntityCatalogType.ITEM,
 	};
@@ -240,6 +251,7 @@ class DL_LootSystem : WorldSystem
 			inv.HideOwner();
 	}
 	
+	ref ScriptInvoker Event_LootCatalogsReady = new ScriptInvoker;
 	bool ReadLootCatalogs(out SCR_WeightedArray<SCR_EntityCatalogEntry> data)
 	{
 		array<Faction> factions = {};
@@ -263,6 +275,9 @@ class DL_LootSystem : WorldSystem
 					continue;
 				}
 				
+				if (factionCatalog.GetCatalogType() == EEntityCatalogType.WEAPONS_TRIPOD)
+					continue;
+				
 				factionCatalog.MergeEntityList(entries);
 			}
 		}
@@ -275,7 +290,7 @@ class DL_LootSystem : WorldSystem
 				continue;
 			
 			SCR_EArsenalItemType itemType = item.GetItemType();
-			if (!itemType || itemType == itemBlacklist)
+			if (!itemType || itemBlacklist.Contains(itemType))
 				continue;
 			
 			SCR_EArsenalItemMode itemMode = item.GetItemMode();
@@ -308,17 +323,20 @@ class DL_LootSystem : WorldSystem
 			float weight = 100 - (Math.Min(Math.Max(value, 1) * scarcityMultiplier, 999) / 1000 * 100);
 			data.Insert(entry, weight);
 			
-			PrintFormat("DL_LootSystem: Item %1 calculated value of %2, weight of %3", entry, value, weight);
+			//PrintFormat("DL_LootSystem: Item %1 calculated value of %2, weight of %3", entry, value, weight);
 		}
 
 		if (data.IsEmpty())
 			return false;
 		
 		PrintFormat("DL_LootSystem: Found %1 items in %2 EntityCatalogs", data.Count(), factions.Count());
+		lootDataReady = true;
+		Event_LootCatalogsReady.Invoke(data);
 		
 		return true;
 	}
 	
+	ref ScriptInvoker Event_VehicleCatalogsReady = new ScriptInvoker;
 	bool ReadVehicleCatalogs(out array<SCR_EntityCatalogEntry> data)
 	{
 		SCR_EntityCatalogManagerComponent comp = SCR_EntityCatalogManagerComponent.GetInstance();
@@ -340,6 +358,9 @@ class DL_LootSystem : WorldSystem
 
 		if (data.IsEmpty())
 			return false;
+		
+		vehicleDataReady = true;
+		Event_VehicleCatalogsReady.Invoke(data);
 		
 		return true;
 	}
