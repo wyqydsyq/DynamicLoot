@@ -7,6 +7,9 @@ class DL_LootSystem : WorldSystem
 	[Attribute("false", UIWidgets.Auto, desc: "Enable creation of dynamic loot spawners. With this off the loot EntityCatalogs will still be processed for anything else that needs them, but loot spawners will not be added to prefabs", category: "Dynamic Loot/Loot")]
 	bool enableLootSpawning;
 	
+	[Attribute("3600", UIWidgets.Auto, desc: "Time (in seconds) after spawning loot that a spawner should auto-despawn so it can spawn new items when next opened", category: "Dynamic Loot/Loot")]
+	float lootDespawnTime;
+	
 	[Attribute("2.5", UIWidgets.Auto, desc: "Amplifies scarcity gap between low and high value gear, 2.5 works well for vanilla where few items are >200 supply, if high-end modded gear is too common try increasing this value", category: "Dynamic Loot/Loot")]
 	float scarcityMultiplier;
 	
@@ -55,7 +58,6 @@ class DL_LootSystem : WorldSystem
 		"Rack_",
 		"WeaponRack"
 	};
-	
 		
 	[Attribute("3.0", UIWidgets.Auto, desc: "Multiplies spawn rate of ammo, should be at least be enough to negate uncommonItemTypesMultiplier so magazines are more common than scopes and suppressors", category: "Dynamic Loot")]
 	float ammoMultiplier;	
@@ -145,18 +147,19 @@ class DL_LootSystem : WorldSystem
 		if (!Replication.IsServer()) // only calculate updates on server, changes are broadcast to clients
 			return;
 		
+		if (!enableLootSpawning)
+			return;
+		
 		float time = GetGame().GetWorld().GetFixedTimeSlice();
 		lastTickTime += time;
 		if (lastTickTime < tickInterval)
 			return;
-		
 		lastTickTime = 0;
 		
-		if (!enableLootSpawning)
-			return;
-		
 		// create spawner entity prefabs for each eligible spawner component
-		for(int i; i < Math.Min(100, spawnComponents.Count()); i++)
+		// limit to 250 per tick to avoid tanking server too hard at start
+		// as most maps will easily have 10k+ spawns to process, doing all that at once is bad
+		for(int i; i < Math.Min(250, spawnComponents.Count()); i++)
 		{
 			DL_LootSpawnComponent comp = spawnComponents[i];
 			if (!comp)
@@ -295,9 +298,9 @@ class DL_LootSystem : WorldSystem
 			
 			SCR_EArsenalItemMode itemMode = item.GetItemMode();
 			if (
-				itemMode == SCR_EArsenalItemMode.WEAPON ||
-				itemMode == SCR_EArsenalItemMode.WEAPON_VARIANTS ||
-				itemMode == SCR_EArsenalItemMode.ATTACHMENT
+				itemMode == SCR_EArsenalItemMode.WEAPON
+				|| itemMode == SCR_EArsenalItemMode.WEAPON_VARIANTS
+				|| itemMode == SCR_EArsenalItemMode.ATTACHMENT
 			)
 				item.PostInitData(entry);
 			
@@ -309,13 +312,17 @@ class DL_LootSystem : WorldSystem
 			if (uncommonItemTypes.Contains(itemType))
 				value = value / uncommonItemTypesMultiplier;
 			
-			if (itemMode == SCR_EArsenalItemMode.AMMUNITION && itemType != SCR_EArsenalItemType.MACHINE_GUN)
+			if (
+				itemMode == SCR_EArsenalItemMode.AMMUNITION
+				&& itemType != SCR_EArsenalItemType.MACHINE_GUN // already common enough to find more than you can carry
+				&& itemType != SCR_EArsenalItemType.ROCKET_LAUNCHER // same as above
+			)
 				value = value / ammoMultiplier;	
 					
 			if (itemMode == SCR_EArsenalItemMode.ATTACHMENT)
 				value = value / attachmentMultiplier;
 			
-			// base item rarity of inverse of supply cost % of 1k
+			// base item rarity on inverse of supply cost % of 1k
 			// e.g.
 			// 100 - (40 supply) / 1000 * 100 = 96 weight
 			// 100 - (120 supply) / 1000 * 100 = 88 weight

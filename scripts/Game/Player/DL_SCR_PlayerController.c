@@ -2,18 +2,12 @@ modded class SCR_PlayerController : PlayerController
 {
 	void AskOpenContainer(DL_LootSpawn spawner)
 	{
-		PrintFormat("DynamicLoot: AskOpenContainer(%1)", spawner);
 		Rpc(Rpc_AskOpenContainer_S, Replication.FindId(spawner.FindComponent(RplComponent)), SCR_PlayerController.GetLocalPlayerId());
 	}
 	
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
     private void Rpc_AskOpenContainer_S(RplId spawnerId, int playerId)
     {
-		int attemptLimit = 25;
-		int attempts = 0;
-		
-		PrintFormat("DynamicLoot: Rpc_AskOpenContainer_S(%1, %2)", spawnerId, playerId);
-		
         RplComponent rplC = RplComponent.Cast(Replication.FindItem(spawnerId));
 		if (!rplC)
 			return;
@@ -25,31 +19,7 @@ modded class SCR_PlayerController : PlayerController
 		DL_LootSystem sys = DL_LootSystem.GetInstance();
 		sys.OnContainerToggled(spawn, true);
 		
-		for (int i; i < sys.maxLootItemsPerContainer && !spawn.spawned; i++)
-		{
-			IEntity entity;
-			bool success = spawn.SpawnLoot(entity);
-			
-			// container filled or tried to spawn something too big
-			if (!success)
-				break;
-			
-			// if loot failed to spawn but min not reached, refund attempt and continue to hopefully get something valid next time
-			if (!entity && i <= spawn.minLootItems && attempts < attemptLimit)
-			{
-				attempts++;
-				i--;
-				continue;
-			}
-			
-			attempts = 0;
-			
-			// chance to spawn less than max based on accumulated value
-			if (Math.RandomInt(1, spawn.maxSupplyValue) <= Math.Min(spawn.accumulatedSupplyValue, spawn.maxSupplyValue) || spawn.accumulatedSpawnedVolume >= spawn.maxVolume)
-				break;
-		}
-		
-		spawn.spawned = true;
+		spawn.SpawnLoot();
 		
 		SCR_PlayerController pc = SCR_PlayerController.Cast(GetGame().GetPlayerManager().GetPlayerController(playerId));
 		pc.TellOpenContainer(spawnerId);

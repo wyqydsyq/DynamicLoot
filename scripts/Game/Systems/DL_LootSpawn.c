@@ -8,7 +8,8 @@ class DL_LootSpawn : GenericEntity
 	SCR_EArsenalItemType categoryFilter;
 	
 	bool spawned = false;
-	int minLootItems;
+	
+	int minLootItems = 1;
 	float maxSupplyValue = 10000;
 	float accumulatedSupplyValue = 0;
 	
@@ -29,8 +30,41 @@ class DL_LootSpawn : GenericEntity
 		sys.spawns.Insert(this);
 	}
 	
+	void SpawnLoot()
+	{
+		DL_LootSystem sys = DL_LootSystem.GetInstance();
+		int attemptLimit = 25;
+		int attempts = 0;
+		
+		for (int i; i < sys.maxLootItemsPerContainer && !spawned; i++)
+		{
+			IEntity entity;
+			bool success = SpawnItem(entity);
+			
+			// container filled or tried to spawn something too big
+			if (!success)
+				break;
+			
+			// if loot failed to spawn but min not reached, refund attempt and continue to hopefully get something valid next time
+			if (!entity && i <= minLootItems && attempts < attemptLimit)
+			{
+				attempts++;
+				i--;
+				continue;
+			}
+			
+			attempts = 0;
+			
+			// chance to spawn less than max based on accumulated value
+			if (Math.RandomInt(1, maxSupplyValue) <= Math.Min(accumulatedSupplyValue, maxSupplyValue) || accumulatedSpawnedVolume >= maxVolume)
+				break;
+		}
+		
+		spawned = true;
+	}
+	
 	// returns spawned entity if successful, null if unable to find slot
-	bool SpawnLoot(out IEntity entity)
+	bool SpawnItem(out IEntity entity)
 	{
 		DL_LootSystem sys = DL_LootSystem.GetInstance();
 		SCR_EntityCatalogEntry entry;
@@ -94,7 +128,26 @@ class DL_LootSpawn : GenericEntity
 		accumulatedSupplyValue += Math.Min(item.GetSupplyCost(SCR_EArsenalSupplyCostType.GADGET_ARSENAL, true), 1);
 		accumulatedSpawnedVolume += itemVolume;
 		
+		GetGame().GetCallqueue().CallLater(DespawnLoot, sys.lootDespawnTime * 1000);
+		
 		return true;
+	}
+	
+	void DespawnLoot()
+	{
+		SCR_UniversalInventoryStorageComponent inv = SCR_UniversalInventoryStorageComponent.Cast(FindComponent(SCR_UniversalInventoryStorageComponent));
+		if (!inv)
+			return;
+		
+		array<InventoryItemComponent> items = {};
+		inv.GetOwnedItems(items);
+		
+		foreach(InventoryItemComponent item : items)
+		{
+			SCR_EntityHelper.DeleteEntityAndChildren(item.GetOwner());
+		}
+		
+		spawned = false;
 	}
 }
 
