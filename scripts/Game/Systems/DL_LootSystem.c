@@ -106,6 +106,7 @@ class DL_LootSystem : WorldSystem
 	
 	bool vehicleDataReady = false;
 	ref array<SCR_EntityCatalogEntry> vehicleData = {};
+	ref SCR_EntityCatalog vehicleCatalog;
 	
 	
 	ref array<EEntityCatalogType> labels = {
@@ -130,7 +131,7 @@ class DL_LootSystem : WorldSystem
 	{
 		PrintFormat("DL_LootSystem: OnInit");
 		GetGame().GetCallqueue().Call(ReadLootCatalogs, lootData);
-		GetGame().GetCallqueue().CallLater(ReadVehicleCatalogs, 5000, false, vehicleData);
+		GetGame().GetCallqueue().Call(ReadVehicleCatalogs, vehicleData);
 	}
 	
 	static DL_LootSystem GetInstance()
@@ -285,6 +286,8 @@ class DL_LootSystem : WorldSystem
 			}
 		}
 		
+		// @TODO split into reusable EvaluateEntries method so consuming mods can apply rarity
+		// logic to their own custom catalog entity lists (e.g. label-filtered vehicle spawns)
 		foreach(SCR_EntityCatalogEntry entry : entries)
 		{
 			float value = 1;
@@ -344,12 +347,13 @@ class DL_LootSystem : WorldSystem
 	}
 	
 	ref ScriptInvoker Event_VehicleCatalogsReady = new ScriptInvoker;
-	bool ReadVehicleCatalogs(out array<SCR_EntityCatalogEntry> data)
+	SCR_EntityCatalog ReadVehicleCatalogs(out array<SCR_EntityCatalogEntry> data)
 	{
-		SCR_EntityCatalogManagerComponent comp = SCR_EntityCatalogManagerComponent.GetInstance();
-		if (!comp)
-			return false;
-		
+		SCR_EntityCatalog entityCatalog = new SCR_EntityCatalog();
+		entityCatalog.GetCatalogType() = EEntityCatalogType.VEHICLE;
+		ref array<ref SCR_EntityCatalogEntry> list = {};
+		entityCatalog.SetEntityList(list);
+
 		array<Faction> factions = {};
 		GetGame().GetFactionManager().GetFactionsList(factions);
 		foreach(Faction f : factions)
@@ -360,15 +364,23 @@ class DL_LootSystem : WorldSystem
 			
 			SCR_EntityCatalog factionCatalog = fact.GetFactionEntityCatalogOfType(EEntityCatalogType.VEHICLE);
 			if (factionCatalog)
+			{
+				// merge catalogs
+				entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef());
+				
+				// merge entries for evaluating
 				factionCatalog.MergeEntityList(data);
+			}
 		}
 
-		if (data.IsEmpty())
-			return false;
+		if (!entityCatalog)
+			return null;
 		
+		vehicleCatalog = entityCatalog;
+		vehicleData = data;
 		vehicleDataReady = true;
 		Event_VehicleCatalogsReady.Invoke(data);
 		
-		return true;
+		return entityCatalog;
 	}
 }
