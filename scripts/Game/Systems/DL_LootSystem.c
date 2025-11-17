@@ -59,6 +59,14 @@ class DL_LootSystem : WorldSystem
 		"WeaponRack"
 	};
 		
+	ref array<string> blacklist = {
+		"Vehicle",
+		"Workbench_Vice",
+		"KitchenHood",
+		"CoatRack",
+		"TowelRack"
+	};
+		
 	[Attribute("3.0", UIWidgets.Auto, desc: "Multiplies spawn rate of ammo, should be at least be enough to negate uncommonItemTypesMultiplier so magazines are more common than scopes and suppressors", category: "Dynamic Loot")]
 	float ammoMultiplier;	
 		
@@ -88,6 +96,12 @@ class DL_LootSystem : WorldSystem
 		SCR_EArsenalItemType.SNIPER_RIFLE,
 		SCR_EArsenalItemType.MACHINE_GUN,
 		SCR_EArsenalItemType.LETHAL_THROWABLE
+	};	
+	
+	[Attribute("0.45", UIWidgets.Auto, desc: "Multiplies spawn rate of rare items (generally rocket launchers, NVGs/thermals etc)", category: "Dynamic Loot")]
+	float rareItemTypesMultiplier;
+	ref array<SCR_EArsenalItemType> rareItemTypes = {
+		SCR_EArsenalItemType.ROCKET_LAUNCHER
 	};
 	
 	ref array<SCR_EArsenalItemType> itemBlacklist = {
@@ -177,19 +191,21 @@ class DL_LootSystem : WorldSystem
 		if (!owner)
 			return;
 		
-		array<string> segments = {};
-		string resource = owner.ToString();
-		resource.Split("/", segments, true);
+		ResourceName resource = owner.ToString();
+		
+		foreach(string blacklistType : blacklist)
+		{
+			if (resource.Contains(blacklistType))
+				return;
+		}
+		
 		bool allowed = false;
 		foreach (string type : whitelist)
 		{
-			foreach (string segment : segments)
+			if (resource.Contains(type))
 			{
-				if (resource.Contains(type))
-				{
-					allowed = true;
-					break 2;
-				}
+				allowed = true;
+				break;
 			}
 		}
 		
@@ -214,12 +230,18 @@ class DL_LootSystem : WorldSystem
 		params.TransformMode = ETransformMode.LOCAL;
 		
 		DL_LootSpawn spawn = DL_LootSpawn.Cast(GetGame().SpawnEntityPrefabEx("{E00CB9FFFC6C9339}Prefabs/DL_LootSpawn.et", true, null, params));
+		owner.AddChild(spawn, -1);
 		
 		// set spawn volume based on parent char collision volume which should represent its physical space in world
 		SCR_UniversalInventoryStorageComponent storage = SCR_UniversalInventoryStorageComponent.Cast(spawn.FindComponent(SCR_UniversalInventoryStorageComponent));
 		float parentVolume = Math.Max(10, ((maxes[0] - mins[0]) * (maxes[1] - mins[1]) * (maxes[2] - mins[2])) * 100);
 		spawn.maxVolume = parentVolume;
 		storage.SetAdditionalVolume(parentVolume);
+		
+		//VObject vobj = owner.GetVObject();
+		//spawn.SetObject(vobj, "");
+		//spawn.SetFlags(~EntityFlags.VISIBLE);
+		//spawn.SetOrigin(owner.GetOrigin());
 		
 		SCR_UniversalInventoryStorageComponent inv = SCR_UniversalInventoryStorageComponent.Cast(spawn.FindComponent(SCR_UniversalInventoryStorageComponent));
 		if (!inv)
@@ -314,6 +336,10 @@ class DL_LootSystem : WorldSystem
 			
 			if (uncommonItemTypes.Contains(itemType))
 				value = value / uncommonItemTypesMultiplier;
+				
+			// @TODO figure out a clean way to categorize stuff like NVGs/thermals as rare
+			if (rareItemTypes.Contains(itemType))
+				value = value / rareItemTypesMultiplier;
 			
 			if (
 				itemMode == SCR_EArsenalItemMode.AMMUNITION

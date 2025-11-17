@@ -60,6 +60,7 @@ class DL_LootSpawn : GenericEntity
 				break;
 		}
 		
+		GetGame().GetCallqueue().CallLater(DespawnLoot, sys.lootDespawnTime * 1000);
 		spawned = true;
 	}
 	
@@ -127,8 +128,6 @@ class DL_LootSpawn : GenericEntity
 
 		accumulatedSupplyValue += Math.Min(item.GetSupplyCost(SCR_EArsenalSupplyCostType.GADGET_ARSENAL, true), 1);
 		accumulatedSpawnedVolume += itemVolume;
-		
-		GetGame().GetCallqueue().CallLater(DespawnLoot, sys.lootDespawnTime * 1000);
 		
 		return true;
 	}
