@@ -144,6 +144,9 @@ class DL_LootSystem : WorldSystem
 	override void OnInit()
 	{
 		PrintFormat("DL_LootSystem: OnInit");
+		if (!Replication.IsServer())
+			return;
+		
 		GetGame().GetCallqueue().Call(ReadLootCatalogs, lootData);
 		GetGame().GetCallqueue().Call(ReadVehicleCatalogs, vehicleData);
 	}
