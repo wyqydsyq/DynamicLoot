@@ -1,19 +1,19 @@
 class DL_LootSystem : WorldSystem
 {
 	float lastTickTime = 0;
-	[Attribute("0.1", UIWidgets.Auto, desc: "Dynamic Loot system tick rate, setting this too low may cause performance issues. Too high may cause delays in loot processing.", category: "Dynamic Loot")]
+	[Attribute("0.1", UIWidgets.Auto, desc: "Dynamic Loot system tick rate, setting this too low may cause performance issues. Too high may cause delays in loot processing.", category: "Dynamic Loot - Core")]
 	float tickInterval;
 	
-	[Attribute("false", UIWidgets.Auto, desc: "Enable creation of dynamic loot spawners. With this off the loot EntityCatalogs will still be processed for anything else that needs them, but loot spawners will not be added to prefabs", category: "Dynamic Loot/Loot")]
+	[Attribute("false", UIWidgets.Auto, desc: "Enable creation of dynamic loot spawners. With this off the loot EntityCatalogs will still be processed for anything else that needs them, but loot spawners will not be added to prefabs", category: "Dynamic Loot - Loot Spawning")]
 	bool enableLootSpawning;
 	
-	[Attribute("3600", UIWidgets.Auto, desc: "Time (in seconds) after spawning loot that a spawner should auto-despawn so it can spawn new items when next opened", category: "Dynamic Loot/Loot")]
+	[Attribute("3600", UIWidgets.Auto, desc: "Time (in seconds) after spawning loot that a spawner should auto-despawn so it can spawn new items when next opened", category: "Dynamic Loot - Loot Spawning")]
 	float lootDespawnTime;
 	
-	[Attribute("2.5", UIWidgets.Auto, desc: "Amplifies scarcity gap between low and high value gear, 2.5 works well for vanilla where few items are >200 supply, if high-end modded gear is too common try increasing this value", category: "Dynamic Loot/Loot")]
+	[Attribute("2.5", UIWidgets.Auto, desc: "Amplifies scarcity gap between low and high value gear, 2.5 works well for vanilla where few items are >200 supply, if high-end modded gear is too common try increasing this value", category: "Dynamic Loot - Loot Spawning")]
 	float scarcityMultiplier;
 	
-	[Attribute("20", UIWidgets.Auto, desc: "Max items to spawn per container, setting this too high may cause performance issues.", category: "Dynamic Loot/Loot")]
+	[Attribute("20", UIWidgets.Auto, desc: "Max items to spawn per container, setting this too high may cause performance issues.", category: "Dynamic Loot - Loot Spawning")]
 	int maxLootItemsPerContainer;
 	
 	//[Attribute(desc: "ResourceName whitelist, entities with the DL_LootSpawnComponent attached and containing one of these as a substring of its ResourceName will become loot container", category: "Dynamic Loot/Loot")]
@@ -67,13 +67,13 @@ class DL_LootSystem : WorldSystem
 		"TowelRack"
 	};
 		
-	[Attribute("3.0", UIWidgets.Auto, desc: "Multiplies spawn rate of ammo, should be at least be enough to negate uncommonItemTypesMultiplier so magazines are more common than scopes and suppressors", category: "Dynamic Loot")]
+	[Attribute("3.0", UIWidgets.Auto, desc: "Multiplies spawn rate of ammo, should be at least be enough to negate uncommonItemTypesMultiplier so magazines are more common than scopes and suppressors", category: "Dynamic Loot - Loot Spawning")]
 	float ammoMultiplier;	
 		
-	[Attribute("0.5", UIWidgets.Auto, desc: "Multiplies spawn rate of attachments, if modded attachments are too common try decreasing this or increasing their individual arsenal values", category: "Dynamic Loot")]
+	[Attribute("0.5", UIWidgets.Auto, desc: "Multiplies spawn rate of attachments, if modded attachments are too common try decreasing this or increasing their individual arsenal values", category: "Dynamic Loot - Loot Spawning")]
 	float attachmentMultiplier;
 	
-	[Attribute("1.25", UIWidgets.Auto, desc: "Multiplies spawn rate of common items (generally clothes and equipment)", category: "Dynamic Loot")]
+	[Attribute("1.25", UIWidgets.Auto, desc: "Multiplies spawn rate of common items (generally clothes and equipment)", category: "Dynamic Loot - Loot Spawning")]
 	float commonItemTypesMultiplier;
 	ref array <SCR_EArsenalItemType> commonItemTypes = {
 		SCR_EArsenalItemType.HEAL,
@@ -86,7 +86,7 @@ class DL_LootSystem : WorldSystem
 		SCR_EArsenalItemType.PISTOL
 	};
 	
-	[Attribute("0.75", UIWidgets.Auto, desc: "Multiplies spawn rate of uncommon items (generally guns and explosives)", category: "Dynamic Loot")]
+	[Attribute("0.75", UIWidgets.Auto, desc: "Multiplies spawn rate of uncommon items (generally guns and explosives)", category: "Dynamic Loot - Loot Spawning")]
 	float uncommonItemTypesMultiplier;
 	ref array<SCR_EArsenalItemType> uncommonItemTypes = {
 		SCR_EArsenalItemType.RIFLE,
@@ -98,7 +98,7 @@ class DL_LootSystem : WorldSystem
 		SCR_EArsenalItemType.LETHAL_THROWABLE
 	};	
 	
-	[Attribute("0.45", UIWidgets.Auto, desc: "Multiplies spawn rate of rare items (generally rocket launchers, NVGs/thermals etc)", category: "Dynamic Loot")]
+	[Attribute("0.45", UIWidgets.Auto, desc: "Multiplies spawn rate of rare items (generally rocket launchers, NVGs/thermals etc)", category: "Dynamic Loot - Loot Spawning")]
 	float rareItemTypesMultiplier;
 	ref array<SCR_EArsenalItemType> rareItemTypes = {
 		SCR_EArsenalItemType.ROCKET_LAUNCHER
