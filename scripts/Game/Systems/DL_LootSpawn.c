@@ -70,8 +70,8 @@ class DL_LootSpawn : GenericEntity
 		DL_LootSystem sys = DL_LootSystem.GetInstance();
 		SCR_EntityCatalogEntry entry;
 		
-		if (sys.lootData.Count())
-			sys.lootData.GetRandomValue(entry);
+		if (sys.lootDataWeighted.Count())
+			sys.lootDataWeighted.GetRandomValue(entry);
 		
 		if (!entry)
 			return false;

@@ -116,12 +116,13 @@ class DL_LootSystem : WorldSystem
 	
 	// raw weighted loot data lists of evaluated entity catalog items based on their arsenal supply costs
 	bool lootDataReady = false;
-	ref SCR_WeightedArray<SCR_EntityCatalogEntry> lootData = new SCR_WeightedArray<SCR_EntityCatalogEntry>();
+	ref array<SCR_EntityCatalogEntry> lootData = {};
+	ref SCR_WeightedArray<SCR_EntityCatalogEntry> lootDataWeighted = new SCR_WeightedArray<SCR_EntityCatalogEntry>();
+	ref SCR_EntityCatalog lootCatalog;
 	
 	bool vehicleDataReady = false;
 	ref array<SCR_EntityCatalogEntry> vehicleData = {};
 	ref SCR_EntityCatalog vehicleCatalog;
-	
 	
 	ref array<EEntityCatalogType> labels = {
 		EEntityCatalogType.ITEM,
@@ -144,11 +145,9 @@ class DL_LootSystem : WorldSystem
 	override void OnInit()
 	{
 		PrintFormat("DL_LootSystem: OnInit");
-		if (!Replication.IsServer())
-			return;
 		
-		GetGame().GetCallqueue().Call(ReadLootCatalogs, lootData);
-		GetGame().GetCallqueue().Call(ReadVehicleCatalogs, vehicleData);
+		GetGame().GetCallqueue().Call(ReadLootCatalogs);
+		GetGame().GetCallqueue().Call(ReadVehicleCatalogs);
 	}
 	
 	static DL_LootSystem GetInstance()
@@ -177,7 +176,7 @@ class DL_LootSystem : WorldSystem
 		// create spawner entity prefabs for each eligible spawner component
 		// limit to 250 per tick to avoid tanking server too hard at start
 		// as most maps will easily have 10k+ spawns to process, doing all that at once is bad
-		for(int i; i < Math.Min(250, spawnComponents.Count()); i++)
+		for(int i; i < Math.Min(100, spawnComponents.Count()); i++)
 		{
 			DL_LootSpawnComponent comp = spawnComponents[i];
 			if (!comp)
@@ -235,12 +234,15 @@ class DL_LootSystem : WorldSystem
 		DL_LootSpawn spawn = DL_LootSpawn.Cast(GetGame().SpawnEntityPrefabEx("{E00CB9FFFC6C9339}Prefabs/DL_LootSpawn.et", true, null, params));
 		owner.AddChild(spawn, -1);
 		
-		// set spawn volume based on parent char collision volume which should represent its physical space in world
+		// set spawn volume based on parent bbox volume which should roughly represent its physical space in world
 		SCR_UniversalInventoryStorageComponent storage = SCR_UniversalInventoryStorageComponent.Cast(spawn.FindComponent(SCR_UniversalInventoryStorageComponent));
 		float parentVolume = Math.Max(10, ((maxes[0] - mins[0]) * (maxes[1] - mins[1]) * (maxes[2] - mins[2])) * 100);
 		spawn.maxVolume = parentVolume;
 		storage.SetAdditionalVolume(parentVolume);
 		
+		// how to apply parent mesh dimensions to spawn for action contexts w/o rendering xob?? :(
+		// if we can do this in a way detected by storage component's capacity coefficient mode would be ideal
+		// and allow removing the above manual bbox calculation
 		//VObject vobj = owner.GetVObject();
 		//spawn.SetObject(vobj, "");
 		//spawn.SetFlags(~EntityFlags.VISIBLE);
@@ -251,15 +253,6 @@ class DL_LootSystem : WorldSystem
 			return;
 		
 		OnContainerToggled(spawn, false);
-		
-		if (!spawn.categoryFilter && resource.Contains("FirstAidBox"))
-		{
-			spawn.categoryFilter = SCR_EArsenalItemType.HEAL;
-			spawn.minLootItems = 2;
-		}
-		
-		if (!spawn.categoryFilter && resource.Contains("Kitchen"))
-			spawn.categoryFilter = SCR_EArsenalItemType.HEAL | SCR_EArsenalItemType.EQUIPMENT | SCR_EArsenalItemType.HANDWEAR;
 	}
 	
 	void HandleManagerChanged(InventoryStorageManagerComponent manager)
@@ -281,38 +274,51 @@ class DL_LootSystem : WorldSystem
 	}
 	
 	ref ScriptInvoker Event_LootCatalogsReady = new ScriptInvoker;
-	bool ReadLootCatalogs(out SCR_WeightedArray<SCR_EntityCatalogEntry> data)
+	SCR_EntityCatalog ReadLootCatalogs()
 	{
-		array<Faction> factions = {};
-		GetGame().GetFactionManager().GetFactionsList(factions); //{"US", "USSR", "FIA", "CIV"};
-		
-		PrintFormat("DL_LootSystem: Reading EntityCatalogs for %1 factions", factions.Count());
+		SCR_EntityCatalog entityCatalog = new SCR_EntityCatalog();
+		entityCatalog.SetCatalogType(EEntityCatalogType.ITEM);
+		entityCatalog.SetEntityList({});
 		
 		array<SCR_EntityCatalogEntry> entries = {};
+		array<Faction> factions = {};
+		GetGame().GetFactionManager().GetFactionsList(factions);
 		foreach(Faction f : factions)
 		{
 			SCR_Faction fact = SCR_Faction.Cast(f);
 			if (!fact)
 				continue;
-			 
-			foreach(EEntityCatalogType label : labels)
+
+			SCR_EntityCatalog factionCatalog = fact.GetFactionEntityCatalogOfType(EEntityCatalogType.ITEM);
+			if (!factionCatalog)
 			{
-				SCR_EntityCatalog factionCatalog = fact.GetFactionEntityCatalogOfType(label);
-				if (!factionCatalog)
-				{
-					PrintFormat("DL_LootSystem: Unable to find catalog of type %1 for %2", label, f);
-					continue;
-				}
-				
-				if (factionCatalog.GetCatalogType() == EEntityCatalogType.WEAPONS_TRIPOD)
-					continue;
-				
-				factionCatalog.MergeEntityList(entries);
+				PrintFormat("DL_LootSystem: Unable to find catalog of type %1 for %2", EEntityCatalogType.ITEM, f, LogLevel.ERROR);
+				continue;
 			}
+			
+			if (factionCatalog.GetCatalogType() == EEntityCatalogType.WEAPONS_TRIPOD)
+				continue;
+			
+			// merge faction catalog into global catalog by ref
+			entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef());
 		}
 		
-		// @TODO split into reusable EvaluateEntries method so consuming mods can apply rarity
-		// logic to their own custom catalog entity lists (e.g. label-filtered vehicle spawns)
+		entityCatalog.GetEntityList(lootData);
+		if (lootData.IsEmpty())
+			return null;
+		
+		PrintFormat("DL_LootSystem: Found %1 items in %2 EntityCatalogs", lootData.Count(), factions.Count());
+		lootCatalog = entityCatalog;
+		lootDataWeighted = CalculateEntryWeights(lootData);
+		lootDataReady = true;
+		Event_LootCatalogsReady.Invoke(lootData);
+		
+		return entityCatalog;
+	}
+	
+	SCR_WeightedArray<SCR_EntityCatalogEntry> CalculateEntryWeights(array<SCR_EntityCatalogEntry> entries)
+	{
+		ref SCR_WeightedArray<SCR_EntityCatalogEntry> data = new SCR_WeightedArray<SCR_EntityCatalogEntry>();
 		foreach(SCR_EntityCatalogEntry entry : entries)
 		{
 			float value = 1;
@@ -361,27 +367,17 @@ class DL_LootSystem : WorldSystem
 			// 100 - (320 supply) / 1000 * 100 = 67 weight
 			float weight = 100 - (Math.Min(Math.Max(value, 1) * scarcityMultiplier, 999) / 1000 * 100);
 			data.Insert(entry, weight);
-			
-			//PrintFormat("DL_LootSystem: Item %1 calculated value of %2, weight of %3", entry, value, weight);
 		}
-
-		if (data.IsEmpty())
-			return false;
 		
-		PrintFormat("DL_LootSystem: Found %1 items in %2 EntityCatalogs", data.Count(), factions.Count());
-		lootDataReady = true;
-		Event_LootCatalogsReady.Invoke(data);
-		
-		return true;
+		return data;
 	}
 	
 	ref ScriptInvoker Event_VehicleCatalogsReady = new ScriptInvoker;
-	SCR_EntityCatalog ReadVehicleCatalogs(out array<SCR_EntityCatalogEntry> data)
+	SCR_EntityCatalog ReadVehicleCatalogs()
 	{
 		SCR_EntityCatalog entityCatalog = new SCR_EntityCatalog();
-		entityCatalog.GetCatalogType() = EEntityCatalogType.VEHICLE;
-		ref array<ref SCR_EntityCatalogEntry> list = {};
-		entityCatalog.SetEntityList(list);
+		entityCatalog.SetCatalogType(EEntityCatalogType.VEHICLE);
+		entityCatalog.SetEntityList({});
 
 		array<Faction> factions = {};
 		GetGame().GetFactionManager().GetFactionsList(factions);
@@ -396,19 +392,16 @@ class DL_LootSystem : WorldSystem
 			{
 				// merge catalogs
 				entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef());
-				
-				// merge entries for evaluating
-				factionCatalog.MergeEntityList(data);
 			}
 		}
 
-		if (!entityCatalog)
+		entityCatalog.GetEntityList(vehicleData);
+		if (vehicleData.IsEmpty())
 			return null;
 		
 		vehicleCatalog = entityCatalog;
-		vehicleData = data;
 		vehicleDataReady = true;
-		Event_VehicleCatalogsReady.Invoke(data);
+		Event_VehicleCatalogsReady.Invoke(vehicleData);
 		
 		return entityCatalog;
 	}

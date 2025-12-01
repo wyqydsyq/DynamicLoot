@@ -3,7 +3,6 @@ modded class SCR_OpenStorageAction : SCR_InventoryAction
 	int attemptLimit = 25;
 	int attempts = 0;
 	
-	#ifndef DISABLE_INVENTORY
 	override protected void PerformActionInternal(SCR_InventoryStorageManagerComponent manager, IEntity pOwnerEntity, IEntity pUserEntity)
 	{
 		CharacterVicinityComponent vicinity = CharacterVicinityComponent.Cast(pUserEntity.FindComponent(CharacterVicinityComponent));
@@ -20,11 +19,9 @@ modded class SCR_OpenStorageAction : SCR_InventoryAction
 		//pUserEntity.FindComponent(inventorycomp);
 		vicinity.SetItemOfInterest(spawn);
 
-		
 		// RPC to server
 		//GetGame().GetCallqueue().Call(AskOpenContainer, spawn)
 		SCR_PlayerController pc = SCR_PlayerController.Cast(GetGame().GetPlayerManager().GetPlayerController(SCR_PlayerController.GetLocalPlayerId()));
 		pc.AskOpenContainer(spawn);
 	}
-	#endif
 };
