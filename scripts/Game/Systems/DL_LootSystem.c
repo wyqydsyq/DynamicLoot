@@ -311,7 +311,7 @@ class DL_LootSystem : WorldSystem
 		lootCatalog = entityCatalog;
 		lootDataWeighted = CalculateEntryWeights(lootData);
 		lootDataReady = true;
-		Event_LootCatalogsReady.Invoke(lootData);
+		Event_LootCatalogsReady.Invoke(lootDataWeighted);
 		
 		return entityCatalog;
 	}
