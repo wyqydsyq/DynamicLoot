@@ -1,5 +1,7 @@
 class DL_LootSystem : WorldSystem
 {
+	ref ScriptCallQueue callQueue = new ScriptCallQueue();
+	
 	float lastTickTime = 0;
 	[Attribute("0.1", UIWidgets.Auto, desc: "Dynamic Loot system tick rate, setting this too low may cause performance issues. Too high may cause delays in loot processing.", category: "Dynamic Loot - Core")]
 	float tickInterval;
@@ -161,6 +163,8 @@ class DL_LootSystem : WorldSystem
 	
 	override void OnUpdate(ESystemPoint point)
 	{
+		callQueue.Tick(point);
+		
 		if (!Replication.IsServer()) // only calculate updates on server, changes are broadcast to clients
 			return;
 		

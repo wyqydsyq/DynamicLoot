@@ -60,7 +60,7 @@ class DL_LootSpawn : GenericEntity
 				break;
 		}
 		
-		GetGame().GetCallqueue().CallLater(DespawnLoot, sys.lootDespawnTime * 1000);
+		sys.callQueue.CallLater(DespawnLoot, sys.lootDespawnTime * 1000);
 		spawned = true;
 	}
 	
