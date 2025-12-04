@@ -66,15 +66,9 @@ DL_LootSpawn {
    IsGhostEntity 1
   }
   RplComponent "{66B435AB029FF950}" {
-   RuntimeOnly 1
   }
   Hierarchy "{66B435AB92FD3A73}" {
   }
- }
- Flags 0x100 0
- editor EntityEditorProps "{66B4818B3046012D}" {
-  Style box
-  DynamicBox 1
  }
  coords 2783.39 25.054 5649.595
 }

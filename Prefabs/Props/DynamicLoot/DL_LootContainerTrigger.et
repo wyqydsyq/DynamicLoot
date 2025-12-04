@@ -1,0 +1,16 @@
+DL_LootContainerTrigger {
+ ID "6707798FD9CAED9A"
+ components {
+  Hierarchy "{6707798F86EE5A56}" {
+  }
+ }
+ coords 6443.961 23.914 3842.082
+ TriggerShapeType Sphere
+ SphereRadius 10
+ ShapeColor 0 0.1255 0.502 0.2313
+ TriggerActivationType "Every query"
+ PeriodicQueries 1
+ ClassesFilter {
+  "SCR_ChimeraCharacter"
+ }
+}

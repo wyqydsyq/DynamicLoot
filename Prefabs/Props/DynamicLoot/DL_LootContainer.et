@@ -1,0 +1,67 @@
+DL_LootSpawn {
+ ID "67083AE87ED558AD"
+ components {
+  MeshObject "{67083AE84FB6B07F}" {
+  }
+  SCR_UniversalInventoryStorageComponent "{670843F56AFEDD78}" {
+   Attributes SCR_ItemAttributeCollection "{670843F4C20E3574}" {
+    ItemDisplayName SCR_InventoryUIInfo "{670843F4C62FA9B3}" {
+     Name "Loot Container"
+     m_bShowIconInInventory 1
+     m_aItemHints {
+      SCR_SupplyRefundItemHintUIInfo "{670843F7D03D6416}" {
+       Name "Est. Value"
+      }
+     }
+    }
+    ItemPhysAttributes ItemPhysicalAttributes "{670843F4F1BF1515}" {
+     SizeSetupStrategy Volume
+     ItemVolume 1000000
+     ActivePhysicalSimulation None
+    }
+    m_Size SLOT_1x1
+    m_SlotType SLOT_ANY
+    m_bStackable 0
+    m_bRefundable 0
+   }
+   WbPlacementFromAttributes 1
+   StoragePurpose 0x6e 0
+   UseCapacityCoefficient 0
+   MaxCumulativeVolume 100000000
+   MaxItemSize 10000 10000 10000
+   SaveInLoadout 0
+   m_fMaxWeight 1000000
+  }
+  ActionsManagerComponent "{670843F583DE659B}" {
+   ActionContexts {
+    UserActionContext "{670843F405DF899F}" {
+     UIInfo UIInfo "{66B435AB5E654BDB}" {
+      Name "Loot"
+     }
+     ContextName "default"
+     Position PointInfo "{66B435AB718DF2AA}" {
+     }
+     Radius 3
+     LineOfSightCheck 1
+    }
+   }
+   additionalActions {
+    SCR_OpenStorageAction "{670843F40C46ABD9}" {
+     ParentContextList {
+      "default"
+     }
+     UIInfo UIInfo "{66B4818436AF070D}" {
+      Name "Loot"
+     }
+     VisibilityRange 2
+     Duration 0.5
+    }
+   }
+  }
+  RplComponent "{67083AE843D4B2CA}" {
+  }
+  Hierarchy "{67083AE84069F289}" {
+  }
+ }
+ coords 125.731 1 162.737
+}

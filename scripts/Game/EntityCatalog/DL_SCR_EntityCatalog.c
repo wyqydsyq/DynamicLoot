@@ -13,14 +13,16 @@ modded class SCR_EntityCatalog
 		return entityList.Count();
 	}*/
 	
-	// copy provided entity list into local entity list
+	// copy provided entity list into local entity list, omitting any resources already processed by loot system
 	int MergeEntityListRef(notnull array<ref SCR_EntityCatalogEntry> entityList)
 	{
+		DL_LootSystem lootSystem = DL_LootSystem.GetInstance();
 		foreach (ref SCR_EntityCatalogEntry entityEntry : entityList)
 		{
-			if (!entityEntry)
+			if (!entityEntry || lootSystem.processedResources.Contains(entityEntry.GetPrefab()))
 				continue;
 			
+			lootSystem.processedResources.Insert(entityEntry.GetPrefab());
 			m_aEntityEntryList.Insert(entityEntry);
 			m_mPrefabIndexes.Insert(entityEntry.GetPrefab(), m_aEntityEntryList.Find(entityEntry));
 		}

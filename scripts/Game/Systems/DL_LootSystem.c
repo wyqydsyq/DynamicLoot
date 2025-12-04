@@ -63,9 +63,12 @@ class DL_LootSystem : WorldSystem
 		
 	ref array<string> blacklist = {
 		"Vehicle",
+		"Items",
 		"Workbench_Vice",
 		"KitchenHood",
 		"CoatRack",
+		"ShellContainer",
+		"CrateStack",
 		"TowelRack"
 	};
 		
@@ -96,13 +99,13 @@ class DL_LootSystem : WorldSystem
 		SCR_EArsenalItemType.EXPLOSIVES,
 		SCR_EArsenalItemType.ROCKET_LAUNCHER,
 		SCR_EArsenalItemType.SNIPER_RIFLE,
-		SCR_EArsenalItemType.MACHINE_GUN,
 		SCR_EArsenalItemType.LETHAL_THROWABLE
 	};	
 	
 	[Attribute("0.45", UIWidgets.Auto, desc: "Multiplies spawn rate of rare items (generally rocket launchers, NVGs/thermals etc)", category: "Dynamic Loot - Loot Spawning")]
 	float rareItemTypesMultiplier;
 	ref array<SCR_EArsenalItemType> rareItemTypes = {
+		SCR_EArsenalItemType.MACHINE_GUN,
 		SCR_EArsenalItemType.ROCKET_LAUNCHER
 	};
 	
@@ -115,6 +118,7 @@ class DL_LootSystem : WorldSystem
 	// list of spawn components in the world, each will be checked if it should be a "lootable" and spawn a container prefab if so
 	ref array<DL_LootSpawnComponent> spawnComponents = {};
 	ref array<DL_LootSpawn> spawns = {};
+	ref array<ResourceName> processedResources = {};
 	
 	// raw weighted loot data lists of evaluated entity catalog items based on their arsenal supply costs
 	bool lootDataReady = false;
@@ -141,13 +145,11 @@ class DL_LootSystem : WorldSystem
         outInfo
             .SetAbstract(false)
             .SetLocation(ESystemLocation.Both)
-            .AddPoint(ESystemPoint.Frame);
+            .AddPoint(ESystemPoint.FixedFrame);
     }
 	
 	override void OnInit()
 	{
-		PrintFormat("DL_LootSystem: OnInit");
-		
 		GetGame().GetCallqueue().Call(ReadLootCatalogs);
 		GetGame().GetCallqueue().Call(ReadVehicleCatalogs);
 	}
@@ -163,49 +165,44 @@ class DL_LootSystem : WorldSystem
 	
 	override void OnUpdate(ESystemPoint point)
 	{
-		callQueue.Tick(point);
 		
-		if (!Replication.IsServer()) // only calculate updates on server, changes are broadcast to clients
-			return;
-		
-		if (!enableLootSpawning)
+		if (!Replication.IsServer())
 			return;
 		
 		float time = GetGame().GetWorld().GetFixedTimeSlice();
+		callQueue.Tick(0.001 * time);
 		lastTickTime += time;
 		if (lastTickTime < tickInterval)
 			return;
 		lastTickTime = 0;
 		
-		// create spawner entity prefabs for each eligible spawner component
-		// limit to 250 per tick to avoid tanking server too hard at start
-		// as most maps will easily have 10k+ spawns to process, doing all that at once is bad
+		// create trigger prefabs for each eligible spawner component
+		// limit per tick to avoid tanking server too hard at start
+		// as some maps will easily have 10k+ spawns to process, doing all that at once is bad
 		for(int i; i < Math.Min(100, spawnComponents.Count()); i++)
 		{
 			DL_LootSpawnComponent comp = spawnComponents[i];
 			if (!comp)
 				continue;
 			
-			CreateLootContainer(comp.GetOwner());
+			if (CanSpawnLoot(comp.GetOwner().ToString()))
+				CreateContainerTrigger(comp.GetOwner());
+			
 			spawnComponents.Remove(i);
 		}
 	}
 	
-	void CreateLootContainer(IEntity owner)
+	bool CanSpawnLoot(ResourceName resource)
 	{
-		GenericEntity entity = GenericEntity.Cast(owner);
-		if (!owner)
-			return;
+		bool allowed = false;
 		
-		ResourceName resource = owner.ToString();
-		
-		foreach(string blacklistType : blacklist)
+		foreach (string blacklistType : blacklist)
 		{
 			if (resource.Contains(blacklistType))
-				return;
+				return false;
+				
 		}
 		
-		bool allowed = false;
 		foreach (string type : whitelist)
 		{
 			if (resource.Contains(type))
@@ -215,28 +212,36 @@ class DL_LootSystem : WorldSystem
 			}
 		}
 		
-		if (!allowed)
-			return;
-		
+		return allowed;
+	}
+	
+	DL_LootContainerTrigger CreateContainerTrigger(IEntity owner)
+	{
+		vector transform[4];
+		owner.GetTransform(transform);
+		EntitySpawnParams params = new EntitySpawnParams();
+		params.Parent = owner;
+		DL_LootContainerTrigger trigger = DL_LootContainerTrigger.Cast(GetGame().SpawnEntityPrefabEx("{A4F6AB6D2E1B668C}Prefabs/DL_LootContainerTrigger.et", false, params: params));
+		return trigger;
+	}
+	
+	void CreateLootContainer(IEntity owner)
+	{
 		vector mins;
 		vector maxes;
 		owner.GetBounds(mins, maxes);
 		vector pos = Vector((mins[0] + maxes[0]) * 0.5, (mins[1] + maxes[1]) * 0.5, (mins[2] + maxes[2]) * 0.5);
 		
 		vector transform[4];
-		owner.GetTransform(transform);
+		owner.GetWorldTransform(transform);
 
 		EntitySpawnParams params = new EntitySpawnParams();
 		params.Parent = owner;
-
-		params.Transform[0] = transform[0];
-		params.Transform[1] = transform[1];
-		params.Transform[2] = transform[2];
 		params.Transform[3] = pos;
 		params.TransformMode = ETransformMode.LOCAL;
 		
-		DL_LootSpawn spawn = DL_LootSpawn.Cast(GetGame().SpawnEntityPrefabEx("{E00CB9FFFC6C9339}Prefabs/DL_LootSpawn.et", true, null, params));
-		owner.AddChild(spawn, -1);
+		ref DL_LootSpawn spawn = DL_LootSpawn.Cast(GetGame().SpawnEntityPrefabEx("{1DAAEE444AEA4BB5}Prefabs/DL_LootContainer.et", true, null, params));
+		spawns.Insert(spawn);
 		
 		// set spawn volume based on parent bbox volume which should roughly represent its physical space in world
 		SCR_UniversalInventoryStorageComponent storage = SCR_UniversalInventoryStorageComponent.Cast(spawn.FindComponent(SCR_UniversalInventoryStorageComponent));
@@ -257,6 +262,7 @@ class DL_LootSystem : WorldSystem
 			return;
 		
 		OnContainerToggled(spawn, false);
+
 	}
 	
 	void HandleManagerChanged(InventoryStorageManagerComponent manager)
@@ -269,12 +275,15 @@ class DL_LootSystem : WorldSystem
 			return;
 		
 		SCR_ItemAttributeCollection attr = SCR_ItemAttributeCollection.Cast(inv.GetAttributes());
+		if (!attr)
+			return;
+		
 		attr.SetIsVisible(open);
 		
-		if (open)
+		/*if (open)
 			inv.ShowOwner();
 		else
-			inv.HideOwner();
+			inv.HideOwner();*/
 	}
 	
 	ref ScriptInvoker Event_LootCatalogsReady = new ScriptInvoker;
