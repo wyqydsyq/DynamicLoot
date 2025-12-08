@@ -20,7 +20,8 @@ DL_LootSpawn {
      ActivePhysicalSimulation None
     }
     m_Size SLOT_1x1
-    m_SlotType SLOT_ANY
+    m_SlotType SLOT_LOOT_STORAGE
+    m_bDraggable 0
     m_bStackable 0
     m_bRefundable 0
    }

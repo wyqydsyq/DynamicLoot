@@ -6,10 +6,11 @@ DL_LootContainerTrigger {
  }
  coords 6443.961 23.914 3842.082
  TriggerShapeType Sphere
- SphereRadius 10
+ SphereRadius 2.5
  ShapeColor 0 0.1255 0.502 0.2313
  TriggerActivationType "Every query"
  PeriodicQueries 1
+ UpdatePeriod 3
  ClassesFilter {
   "SCR_ChimeraCharacter"
  }

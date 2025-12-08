@@ -46,7 +46,7 @@ modded class SCR_PlayerController : PlayerController
 		DL_LootSystem sys = DL_LootSystem.GetInstance();
 		//sys.OnContainerToggled(spawn, true);
 		manager.SetStorageToOpen(spawn);
-		//manager.SetLootStorage(spawn);
+		manager.SetLootStorage(spawn);
 		manager.OpenInventory();
 	}
 }
