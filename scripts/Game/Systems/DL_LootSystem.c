@@ -319,7 +319,7 @@ class DL_LootSystem : WorldSystem
 				continue;
 			
 			// merge faction catalog into global catalog by ref
-			entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef());
+			entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef(), factionCatalog.GetCatalogType());
 		}
 		
 		entityCatalog.GetEntityList(lootData);
@@ -337,6 +337,7 @@ class DL_LootSystem : WorldSystem
 	
 	SCR_WeightedArray<SCR_EntityCatalogEntry> CalculateEntryWeights(array<SCR_EntityCatalogEntry> entries)
 	{
+		// @TODO add a means for weighting Vehicles based on SCR_EditableVehicleComponent's "CAMPAIGN" budget cost
 		ref SCR_WeightedArray<SCR_EntityCatalogEntry> data = new SCR_WeightedArray<SCR_EntityCatalogEntry>();
 		foreach(SCR_EntityCatalogEntry entry : entries)
 		{
@@ -408,10 +409,7 @@ class DL_LootSystem : WorldSystem
 			
 			SCR_EntityCatalog factionCatalog = fact.GetFactionEntityCatalogOfType(EEntityCatalogType.VEHICLE);
 			if (factionCatalog)
-			{
-				// merge catalogs
-				entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef());
-			}
+				entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef(), factionCatalog.GetCatalogType());
 		}
 
 		entityCatalog.GetEntityList(vehicleData);
