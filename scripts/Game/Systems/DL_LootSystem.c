@@ -96,25 +96,28 @@ class DL_LootSystem : WorldSystem
 		SCR_EArsenalItemType.FOOTWEAR,
 		SCR_EArsenalItemType.HANDWEAR,
 		SCR_EArsenalItemType.EQUIPMENT,
-		SCR_EArsenalItemType.PISTOL
 	};
 	
-	[Attribute("0.75", UIWidgets.Auto, desc: "Multiplies spawn rate of uncommon items (generally guns and explosives)", category: "Dynamic Loot - Loot Spawning")]
+	[Attribute("0.75", UIWidgets.Auto, desc: "Multiplies spawn rate of uncommon items (generally military gear)", category: "Dynamic Loot - Loot Spawning")]
 	float uncommonItemTypesMultiplier;
 	ref array<SCR_EArsenalItemType> uncommonItemTypes = {
-		SCR_EArsenalItemType.RIFLE,
-		SCR_EArsenalItemType.WEAPON_ATTACHMENT,
-		SCR_EArsenalItemType.EXPLOSIVES,
-		SCR_EArsenalItemType.ROCKET_LAUNCHER,
-		SCR_EArsenalItemType.SNIPER_RIFLE,
-		SCR_EArsenalItemType.LETHAL_THROWABLE
+		SCR_EArsenalItemType.PISTOL,
+		SCR_EArsenalItemType.HEADWEAR,
+		SCR_EArsenalItemType.VEST_AND_WAIST,
+		SCR_EArsenalItemType.BACKPACK,
+		SCR_EArsenalItemType.WEAPON_ATTACHMENT
 	};	
 	
-	[Attribute("0.45", UIWidgets.Auto, desc: "Multiplies spawn rate of rare items (generally rocket launchers, NVGs/thermals etc)", category: "Dynamic Loot - Loot Spawning")]
+	[Attribute("0.45", UIWidgets.Auto, desc: "Multiplies spawn rate of rare items (generally weapons, NVGs/thermals etc)", category: "Dynamic Loot - Loot Spawning")]
 	float rareItemTypesMultiplier;
 	ref array<SCR_EArsenalItemType> rareItemTypes = {
+		SCR_EArsenalItemType.RIFLE,
+		SCR_EArsenalItemType.SNIPER_RIFLE,
 		SCR_EArsenalItemType.MACHINE_GUN,
-		SCR_EArsenalItemType.ROCKET_LAUNCHER
+		SCR_EArsenalItemType.ROCKET_LAUNCHER,
+		SCR_EArsenalItemType.RADIO_BACKPACK,
+		SCR_EArsenalItemType.EXPLOSIVES,
+		SCR_EArsenalItemType.LETHAL_THROWABLE
 	};
 	
 	ref array<SCR_EArsenalItemType> itemBlacklist = {

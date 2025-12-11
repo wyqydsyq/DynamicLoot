@@ -22,6 +22,10 @@ modded class SCR_EntityCatalog
 			if (!entityEntry || lootSystem.processedResources.Contains(entityEntry.GetPrefab()))
 				continue;
 			
+			SCR_ArsenalItem item = SCR_ArsenalItem.Cast(entityEntry.GetEntityDataOfType(SCR_ArsenalItem));
+			if (!item || !item.IsEnabled())
+				continue;
+			
 			lootSystem.processedResources.Insert(entityEntry.GetPrefab());
 			m_aEntityEntryList.Insert(entityEntry);
 			m_mPrefabIndexes.Insert(entityEntry.GetPrefab(), m_aEntityEntryList.Find(entityEntry));
