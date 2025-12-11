@@ -18,6 +18,15 @@ class DL_LootSystem : WorldSystem
 	[Attribute("20", UIWidgets.Auto, desc: "Max items to spawn per container, setting this too high may cause performance issues.", category: "Dynamic Loot - Loot Spawning")]
 	int maxLootItemsPerContainer;
 	
+	[Attribute("100", UIWidgets.Auto, desc: "Maximum supply value a single loot container can accumulate", category: "Dynamic Loot - Loot Spawning")]
+	float maxContainerValue;
+	
+	[Attribute("0.1", UIWidgets.Auto, params: "0 1", desc: "Chance for a loot container to be a jackpot", category: "Dynamic Loot - Loot Spawning")]
+	float jackpotContainerRate;
+	
+	[Attribute("10", UIWidgets.Auto, desc: "Multiplier applied to max value of jackpot containers", category: "Dynamic Loot - Loot Spawning")]
+	float jackpotContainerValueMultiplier;
+	
 	//[Attribute(desc: "ResourceName whitelist, entities with the DL_LootSpawnComponent attached and containing one of these as a substring of its ResourceName will become loot container", category: "Dynamic Loot/Loot")]
 	ref array<string> whitelist = {
 		"Cupboard",
@@ -82,7 +91,6 @@ class DL_LootSystem : WorldSystem
 	float commonItemTypesMultiplier;
 	ref array <SCR_EArsenalItemType> commonItemTypes = {
 		SCR_EArsenalItemType.HEAL,
-		SCR_EArsenalItemType.WEAPON_ATTACHMENT,
 		SCR_EArsenalItemType.TORSO,
 		SCR_EArsenalItemType.LEGS,
 		SCR_EArsenalItemType.FOOTWEAR,
@@ -279,11 +287,6 @@ class DL_LootSystem : WorldSystem
 			return;
 		
 		attr.SetIsVisible(open);
-		
-		/*if (open)
-			inv.ShowOwner();
-		else
-			inv.HideOwner();*/
 	}
 	
 	ref ScriptInvoker Event_LootCatalogsReady = new ScriptInvoker;
@@ -370,7 +373,7 @@ class DL_LootSystem : WorldSystem
 			)
 				value = value / ammoMultiplier;	
 					
-			if (itemMode == SCR_EArsenalItemMode.ATTACHMENT)
+			if (itemMode == SCR_EArsenalItemMode.ATTACHMENT || itemType == SCR_EArsenalItemType.WEAPON_ATTACHMENT)
 				value = value / attachmentMultiplier;
 			
 			// base item rarity on inverse of supply cost % of 1k

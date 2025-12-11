@@ -10,7 +10,7 @@ DL_LootContainerTrigger {
  ShapeColor 0 0.1255 0.502 0.2313
  TriggerActivationType "Every query"
  PeriodicQueries 1
- UpdatePeriod 3
+ UpdatePeriod 1.5
  ClassesFilter {
   "SCR_ChimeraCharacter"
  }

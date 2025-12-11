@@ -2,10 +2,6 @@ modded class SCR_OpenStorageAction : SCR_InventoryAction
 {
 	override protected void PerformActionInternal(SCR_InventoryStorageManagerComponent manager, IEntity pOwnerEntity, IEntity pUserEntity)
 	{
-		CharacterVicinityComponent vicinity = CharacterVicinityComponent.Cast(pUserEntity.FindComponent(CharacterVicinityComponent));
-		if (!vicinity)
-			return;
-		
 		DL_LootSpawn spawn = DL_LootSpawn.Cast(pOwnerEntity);
 		if (!spawn)
 		{
@@ -13,8 +9,12 @@ modded class SCR_OpenStorageAction : SCR_InventoryAction
 			return;
 		}
 		
+		CharacterVicinityComponent vicinity = CharacterVicinityComponent.Cast(pUserEntity.FindComponent(CharacterVicinityComponent));
+		if (!vicinity)
+			return;
+		
 		//pUserEntity.FindComponent(inventorycomp);
-		//vicinity.SetItemOfInterest(spawn);
+		vicinity.SetItemOfInterest(spawn);
 
 		// RPC to server
 		//GetGame().GetCallqueue().Call(AskOpenContainer, spawn)

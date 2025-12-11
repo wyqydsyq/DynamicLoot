@@ -11,7 +11,6 @@ class DL_LootSpawn : GenericEntity
 	bool spawned = false;
 	
 	int minLootItems = 1;
-	float maxSupplyValue = 10000;
 	float accumulatedSupplyValue = 0;
 	
 	float maxVolume = 100;
@@ -32,8 +31,12 @@ class DL_LootSpawn : GenericEntity
 	
 	void SpawnLoot()
 	{
-		int attemptLimit = 25;
+		int attemptLimit = 5;
 		int attempts = 0;
+		bool isJackpot = Math.RandomFloat(0, 1) <= lootSystem.jackpotContainerRate;
+		float maxSupplyValue = lootSystem.maxContainerValue;
+		if (isJackpot)
+			maxSupplyValue *= lootSystem.jackpotContainerValueMultiplier;
 		
 		for (int i; i < lootSystem.maxLootItemsPerContainer && !spawned; i++)
 		{
@@ -54,12 +57,12 @@ class DL_LootSpawn : GenericEntity
 			
 			attempts = 0;
 			
-			// chance to spawn less than max based on accumulated value
-			if (Math.RandomInt(1, maxSupplyValue) <= Math.Min(accumulatedSupplyValue, maxSupplyValue) || accumulatedSpawnedVolume >= maxVolume)
+			if (accumulatedSupplyValue >= maxSupplyValue || accumulatedSpawnedVolume >= maxVolume)
 				break;
 		}
 		
 		spawned = true;
+		// @TODO probably should set a despawn timestamp and call DespawnLoot from system update when that is exceeded
 		lootSystem.callQueue.CallLater(DespawnLoot, lootSystem.lootDespawnTime);
 	}
 	
