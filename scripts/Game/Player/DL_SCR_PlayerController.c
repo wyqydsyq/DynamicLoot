@@ -44,6 +44,13 @@ modded class SCR_PlayerController : PlayerController
 		ChimeraCharacter char = ChimeraCharacter.Cast(GetControlledEntity());
 		SCR_InventoryStorageManagerComponent manager = SCR_InventoryStorageManagerComponent.Cast(char.GetCharacterController().GetInventoryStorageManager());
 		DL_LootSystem sys = DL_LootSystem.GetInstance();
+		
+		CharacterVicinityComponent vicinity = CharacterVicinityComponent.Cast(char.FindComponent(CharacterVicinityComponent));
+		if (!vicinity)
+			return;
+		
+		vicinity.SetItemOfInterest(spawn);
+		
 		//sys.OnContainerToggled(spawn, true);
 		manager.SetStorageToOpen(spawn);
 		manager.SetLootStorage(spawn);

@@ -22,10 +22,10 @@ DL_LootSpawn {
     m_Size SLOT_1x1
     m_SlotType SLOT_LOOT_STORAGE
     m_bDraggable 0
+    m_bVisible 0
     m_bStackable 0
     m_bRefundable 0
    }
-   WbPlacementFromAttributes 1
    StoragePurpose 0x6e 0
    UseCapacityCoefficient 0
    MaxCumulativeVolume 100000000

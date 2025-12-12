@@ -281,7 +281,7 @@ class DL_LootSystem : WorldSystem
 	
 	void OnContainerToggled(DL_LootSpawn spawn, bool open = false)
 	{
-		SCR_UniversalInventoryStorageComponent inv = SCR_UniversalInventoryStorageComponent.Cast(spawn.FindComponent(SCR_UniversalInventoryStorageComponent));
+		/*SCR_UniversalInventoryStorageComponent inv = SCR_UniversalInventoryStorageComponent.Cast(spawn.FindComponent(SCR_UniversalInventoryStorageComponent));
 		if (!inv)
 			return;
 		
@@ -289,7 +289,7 @@ class DL_LootSystem : WorldSystem
 		if (!attr)
 			return;
 		
-		attr.SetIsVisible(open);
+		attr.SetIsVisible(open);*/
 	}
 	
 	ref ScriptInvoker Event_LootCatalogsReady = new ScriptInvoker;

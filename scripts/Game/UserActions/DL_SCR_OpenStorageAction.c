@@ -12,12 +12,7 @@ modded class SCR_OpenStorageAction : SCR_InventoryAction
 		CharacterVicinityComponent vicinity = CharacterVicinityComponent.Cast(pUserEntity.FindComponent(CharacterVicinityComponent));
 		if (!vicinity)
 			return;
-		
-		//pUserEntity.FindComponent(inventorycomp);
-		vicinity.SetItemOfInterest(spawn);
 
-		// RPC to server
-		//GetGame().GetCallqueue().Call(AskOpenContainer, spawn)
 		SCR_PlayerController pc = SCR_PlayerController.Cast(GetGame().GetPlayerManager().GetPlayerController(SCR_PlayerController.GetLocalPlayerId()));
 		pc.AskOpenContainer(spawn);
 	}
