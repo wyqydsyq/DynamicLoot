@@ -18,10 +18,10 @@ class DL_LootSystem : WorldSystem
 	[Attribute("20", UIWidgets.Auto, desc: "Max items to spawn per container, setting this too high may cause performance issues.", category: "Dynamic Loot - Loot Spawning")]
 	int maxLootItemsPerContainer;
 	
-	[Attribute("100", UIWidgets.Auto, desc: "Maximum supply value a single loot container can accumulate", category: "Dynamic Loot - Loot Spawning")]
+	[Attribute("50", UIWidgets.Auto, desc: "Maximum supply value a single loot container can accumulate", category: "Dynamic Loot - Loot Spawning")]
 	float maxContainerValue;
 	
-	[Attribute("0.1", UIWidgets.Auto, params: "0 1", desc: "Chance for a loot container to be a jackpot", category: "Dynamic Loot - Loot Spawning")]
+	[Attribute("0.05", UIWidgets.Auto, params: "0 1", desc: "Chance for a loot container to be a jackpot", category: "Dynamic Loot - Loot Spawning")]
 	float jackpotContainerRate;
 	
 	[Attribute("10", UIWidgets.Auto, desc: "Multiplier applied to max value of jackpot containers", category: "Dynamic Loot - Loot Spawning")]
