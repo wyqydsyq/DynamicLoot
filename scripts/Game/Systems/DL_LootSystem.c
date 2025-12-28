@@ -189,6 +189,9 @@ class DL_LootSystem : WorldSystem
 			return;
 		lastTickTime = 0;
 		
+		if (!enableLootSpawning)
+			return;
+		
 		// create trigger prefabs for each eligible spawner component
 		// limit per tick to avoid tanking server too hard at start
 		// as some maps will easily have 10k+ spawns to process, doing all that at once is bad
