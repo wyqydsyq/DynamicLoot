@@ -14,7 +14,7 @@ class DL_LootSystem : WorldSystem
 	[Attribute("3600", UIWidgets.Auto, desc: "Time (in seconds) after spawning loot that a spawner should auto-despawn so it can spawn new items when next opened", category: "Dynamic Loot - Loot Spawning")]
 	float lootDespawnTime;
 	
-	[Attribute("2.5", UIWidgets.Auto, desc: "Amplifies scarcity gap between low and high value gear, 2.5 works well for vanilla where few items are >200 supply, if high-end modded gear is too common try increasing this value", category: "Dynamic Loot - Loot Spawning")]
+	[Attribute("25", UIWidgets.Auto, desc: "Amplifies scarcity gap between low and high value gear, 25 works well for vanilla where few items are >200 supply, if high-end modded gear is too common try increasing this value", category: "Dynamic Loot - Loot Spawning")]
 	float scarcityMultiplier;
 	
 	[Attribute("20", UIWidgets.Auto, desc: "Max items to spawn per container, setting this too high may cause performance issues.", category: "Dynamic Loot - Loot Spawning")]
