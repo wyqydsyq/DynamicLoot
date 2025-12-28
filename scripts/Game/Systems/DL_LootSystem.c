@@ -3,6 +3,8 @@ class DL_LootSystem : WorldSystem
 	ref ScriptCallQueue callQueue = new ScriptCallQueue();
 	
 	float lastTickTime = 0;
+	float lootSupplyValueCap = 10000;
+	
 	[Attribute("0.1", UIWidgets.Auto, desc: "Dynamic Loot system tick rate, setting this too low may cause performance issues. Too high may cause delays in loot processing.", category: "Dynamic Loot - Core")]
 	float tickInterval;
 	
@@ -103,15 +105,15 @@ class DL_LootSystem : WorldSystem
 	ref array<SCR_EArsenalItemType> uncommonItemTypes = {
 		SCR_EArsenalItemType.PISTOL,
 		SCR_EArsenalItemType.HEADWEAR,
-		SCR_EArsenalItemType.VEST_AND_WAIST,
 		SCR_EArsenalItemType.BACKPACK,
-		SCR_EArsenalItemType.WEAPON_ATTACHMENT
 	};	
 	
 	[Attribute("0.45", UIWidgets.Auto, desc: "Multiplies spawn rate of rare items (generally weapons, NVGs/thermals etc)", category: "Dynamic Loot - Loot Spawning")]
 	float rareItemTypesMultiplier;
 	ref array<SCR_EArsenalItemType> rareItemTypes = {
 		SCR_EArsenalItemType.RIFLE,
+		SCR_EArsenalItemType.VEST_AND_WAIST,
+		SCR_EArsenalItemType.WEAPON_ATTACHMENT,
 		SCR_EArsenalItemType.SNIPER_RIFLE,
 		SCR_EArsenalItemType.MACHINE_GUN,
 		SCR_EArsenalItemType.ROCKET_LAUNCHER,
@@ -380,12 +382,15 @@ class DL_LootSystem : WorldSystem
 			if (itemMode == SCR_EArsenalItemMode.ATTACHMENT || itemType == SCR_EArsenalItemType.WEAPON_ATTACHMENT)
 				value = value / attachmentMultiplier;
 			
-			// base item rarity on inverse of supply cost % of 1k
+			// base item rarity on inverse of supply cost % of 10k to create some headroom
+			// for multiplier differences
 			// e.g.
-			// 100 - (40 supply) / 1000 * 100 = 96 weight
-			// 100 - (120 supply) / 1000 * 100 = 88 weight
-			// 100 - (320 supply) / 1000 * 100 = 67 weight
-			float weight = 100 - (Math.Min(Math.Max(value, 1) * scarcityMultiplier, 999) / 1000 * 100);
+			// 10000 - (60 supply) = 9940 weight
+			// 10000 - (320 supply) = 9680 weight
+			// 10000 - (470 supply) = 9530 weight
+			// 10000 - (1240 supply) = 8760 weight
+			
+			float weight = lootSupplyValueCap - (Math.Min(Math.Max(value, 1) * scarcityMultiplier, lootSupplyValueCap) / lootSupplyValueCap * 1000);
 			data.Insert(entry, weight);
 		}
 		
