@@ -1,0 +1,7 @@
+GenericEntity {
+ ID "5278CCE99D8927EE"
+ components {
+  DL_LootSpawnCategoryProviderComponent "{685A28AA3D6544CC}" {
+  }
+ }
+}

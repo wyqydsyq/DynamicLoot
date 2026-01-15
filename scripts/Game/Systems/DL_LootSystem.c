@@ -8,19 +8,31 @@ class DL_LootSystem : WorldSystem
 	[Attribute("0.1", UIWidgets.Auto, desc: "Dynamic Loot system tick rate, setting this too low may cause performance issues. Too high may cause delays in loot processing.", category: "Dynamic Loot - Core")]
 	float tickInterval;
 	
+	[Attribute(desc: "FactionKey blacklist, matches will be skipped from entity catalog evaluation (useful for skipping factions with duplicated catalogs)", category: "Dynamic Loot - Entity Catalogs")]
+	ref array<FactionKey> factionBlacklist;
+	
+	[Attribute("10.0", UIWidgets.Auto, desc: "Multiplies weighting of ammo, should be at least be enough to negate uncommonItemTypesMultiplier so magazines are more common than scopes and suppressors", category: "Dynamic Loot - Entity Catalogs")]
+	float ammoMultiplier;	
+	
+	[Attribute("10.0", UIWidgets.Auto, desc: "Multiplies weighting of consumables", category: "Dynamic Loot - Entity Catalogs")]
+	float consumableMultiplier;
+		
+	[Attribute("0.5", UIWidgets.Auto, desc: "Multiplies weighting of attachments, if modded attachments are too common try decreasing this or increasing their individual arsenal values", category: "Dynamic Loot - Entity Catalogs")]
+	float attachmentMultiplier;
+		
+	[Attribute("25", UIWidgets.Auto, desc: "Multiplies all base weights, useful to increase scarcity gap between low and high value gear. If expensive items are too common try increasing it, if they are too rare try decreasing it", category: "Dynamic Loot - Entity Catalogs")]
+	float scarcityMultiplier;
+	
 	[Attribute("false", UIWidgets.Auto, desc: "Enable creation of dynamic loot spawners. With this off the loot EntityCatalogs will still be processed for anything else that needs them, but loot spawners will not be added to prefabs", category: "Dynamic Loot - Loot Spawning")]
 	bool enableLootSpawning;
 	
 	[Attribute("3600", UIWidgets.Auto, desc: "Time (in seconds) after spawning loot that a spawner should auto-despawn so it can spawn new items when next opened", category: "Dynamic Loot - Loot Spawning")]
 	float lootDespawnTime;
 	
-	[Attribute("25", UIWidgets.Auto, desc: "Amplifies scarcity gap between low and high value gear, 25 works well for vanilla where few items are >200 supply, if high-end modded gear is too common try increasing this value", category: "Dynamic Loot - Loot Spawning")]
-	float scarcityMultiplier;
-	
 	[Attribute("20", UIWidgets.Auto, desc: "Max items to spawn per container, setting this too high may cause performance issues.", category: "Dynamic Loot - Loot Spawning")]
 	int maxLootItemsPerContainer;
 	
-	[Attribute("50", UIWidgets.Auto, desc: "Maximum supply value a single loot container can accumulate", category: "Dynamic Loot - Loot Spawning")]
+	[Attribute("10", UIWidgets.Auto, desc: "Maximum supply value a single loot container can accumulate", category: "Dynamic Loot - Loot Spawning")]
 	float maxContainerValue;
 	
 	[Attribute("0.05", UIWidgets.Auto, params: "0 1", desc: "Chance for a loot container to be a jackpot", category: "Dynamic Loot - Loot Spawning")]
@@ -29,98 +41,47 @@ class DL_LootSystem : WorldSystem
 	[Attribute("10", UIWidgets.Auto, desc: "Multiplier applied to max value of jackpot containers", category: "Dynamic Loot - Loot Spawning")]
 	float jackpotContainerValueMultiplier;
 	
-	//[Attribute(desc: "ResourceName whitelist, entities with the DL_LootSpawnComponent attached and containing one of these as a substring of its ResourceName will become loot container", category: "Dynamic Loot/Loot")]
-	ref array<string> whitelist = {
-		"Cupboard",
-		"Cabinet",
-		"Dresser",
-		"Wardrobe",
-		"Bookshelf",
-		"Desk_",
-		"DeskSchool",
-		"Fridge",
-		"Pantry",
-		"Nightstand",
-		"Safe",
-		"Bin",
-		"Basket",
-		"Bucket",
-		"Crate",
-		"CardboardBox",
-		"BoxWooden",
-		"Chest",
-		"Kitchen",
-		"FirstAidBox",
-		"Workbench",
-		"MarsBox",
-		"CargoContainer",
-		"GarbageContainer",
-		"TrashBin",
-		"Suitcase",
-		"CashierShop",
-		"CounterShop",
-		"CoolingBoxShop",
-		"CabinetCardFile",
-		"BeerKeg",
-		"ShelfShop",
-		"ShelfUniversal",
-		"ShoppingCart",
-		"Caravan",
-		"TentBig",
-		"TentSmall",
-		"Rack_",
-		"WeaponRack"
-	};
+	[Attribute(desc: "ResourceName whitelist, entities with the DL_LootSpawnComponent attached and containing one of these as a substring of its ResourceName will become loot container", category: "Dynamic Loot - Loot Spawning")]
+	ref array<string> whitelist;
 		
-	ref array<string> blacklist = {
-		"Vehicle",
-		"Items",
-		"Workbench_Vice",
-		"KitchenHood",
-		"CoatRack",
-		"ShellContainer",
-		"CrateStack",
-		"TowelRack"
-	};
-		
-	[Attribute("3.0", UIWidgets.Auto, desc: "Multiplies spawn rate of ammo, should be at least be enough to negate uncommonItemTypesMultiplier so magazines are more common than scopes and suppressors", category: "Dynamic Loot - Loot Spawning")]
-	float ammoMultiplier;	
-		
-	[Attribute("0.5", UIWidgets.Auto, desc: "Multiplies spawn rate of attachments, if modded attachments are too common try decreasing this or increasing their individual arsenal values", category: "Dynamic Loot - Loot Spawning")]
-	float attachmentMultiplier;
+	[Attribute(desc: "ResourceName blacklist, matches will be excluded from becoming loot containers even if whitelisted", category: "Dynamic Loot - Loot Spawning")]
+	ref array<string> blacklist;
+
+	[Attribute("", uiwidget: UIWidgets.SearchComboBox, enums: ParamEnumArray.FromEnum(SCR_EArsenalItemType), desc: "Categorizes included arsenal item types as military items", category: "Dynamic Loot - Loot Categorization")]
+	ref array<SCR_EArsenalItemType> militaryItemTypes;
 	
-	[Attribute("1.25", UIWidgets.Auto, desc: "Multiplies spawn rate of common items (generally clothes and equipment)", category: "Dynamic Loot - Loot Spawning")]
+	[Attribute("", desc: "Gear considered MILITARY but belonging to included factions and in civilianGearTypes will not be *exclusively* MILITARY, so e.g. pistols and rifles belonging to CIV or FIA can also spawn in URBAN or RURAL areas", category: "Dynamic Loot - Loot Categorization")]
+	ref array<FactionKey> civilianGearFactions;	
+	
+	[Attribute("", uiwidget: UIWidgets.SearchComboBox, enums: ParamEnumArray.FromEnum(SCR_EArsenalItemType), desc: "Gear types considered MILITARY but included here and belonging to a civilian gear faction will not be *exclusively* MILITARY, so e.g. pistols and rifles belonging to CIV or FIA can also spawn in URBAN or RURAL areas", category: "Dynamic Loot - Loot Categorization")]
+	ref array<SCR_EArsenalItemType> civilianGearTypes;
+	
+	[Attribute("", uiwidget: UIWidgets.SearchComboBox, enums: ParamEnumArray.FromEnum(SCR_EArsenalItemType), desc: "Categorizes included arsenal item types as police items", category: "Dynamic Loot - Loot Categorization")]
+	ref array<SCR_EArsenalItemType> policeItemTypes;
+	
+	[Attribute("", uiwidget: UIWidgets.SearchComboBox, enums: ParamEnumArray.FromEnum(SCR_EArsenalItemType), desc: "Categorizes included arsenal item types as medical items", category: "Dynamic Loot - Loot Categorization")]
+	ref array<SCR_EArsenalItemType> medicalItemTypes;	
+	
+	[Attribute("", uiwidget: UIWidgets.SearchComboBox, enums: ParamEnumArray.FromEnum(SCR_EArsenalItemType), desc: "Categorizes included arsenal item types as industrial items", category: "Dynamic Loot - Loot Categorization")]
+	ref array<SCR_EArsenalItemType> industrialItemTypes;	
+	
+	[Attribute("", uiwidget: UIWidgets.SearchComboBox, enums: ParamEnumArray.FromEnum(SCR_EArsenalItemType), desc: "Categorizes included arsenal item types as commercial items", category: "Dynamic Loot - Loot Categorization")]
+	ref array<SCR_EArsenalItemType> commercialItemTypes;
+		
+	[Attribute("1.25", UIWidgets.Auto, desc: "Multiplies spawn rate of common items (generally clothes and equipment)", category: "Dynamic Loot - Entity Catalogs")]
 	float commonItemTypesMultiplier;
-	ref array <SCR_EArsenalItemType> commonItemTypes = {
-		SCR_EArsenalItemType.HEAL,
-		SCR_EArsenalItemType.TORSO,
-		SCR_EArsenalItemType.LEGS,
-		SCR_EArsenalItemType.FOOTWEAR,
-		SCR_EArsenalItemType.HANDWEAR,
-		SCR_EArsenalItemType.EQUIPMENT,
-	};
+	[Attribute("", uiwidget: UIWidgets.SearchComboBox, enums: ParamEnumArray.FromEnum(SCR_EArsenalItemType), desc: "Common item multiplier is applied to included types (RURAL and URBAN areas can spawn common)", category: "Dynamic Loot - Loot Categorization")]
+	ref array<SCR_EArsenalItemType> commonItemTypes;
 	
-	[Attribute("0.75", UIWidgets.Auto, desc: "Multiplies spawn rate of uncommon items (generally military gear)", category: "Dynamic Loot - Loot Spawning")]
+	[Attribute("0.75", UIWidgets.Auto, desc: "Multiplies spawn rate of uncommon items (generally civilian weapons and surplus military gear)", category: "Dynamic Loot - Entity Catalogs")]
 	float uncommonItemTypesMultiplier;
-	ref array<SCR_EArsenalItemType> uncommonItemTypes = {
-		SCR_EArsenalItemType.PISTOL,
-		SCR_EArsenalItemType.HEADWEAR,
-		SCR_EArsenalItemType.BACKPACK,
-	};	
+	[Attribute("", uiwidget: UIWidgets.SearchComboBox, enums: ParamEnumArray.FromEnum(SCR_EArsenalItemType), desc: "Uncommon item multiplier is applied to included types (URBAN areas can spawn uncommon)", category: "Dynamic Loot - Loot Categorization")]
+	ref array<SCR_EArsenalItemType> uncommonItemTypes;	
 	
-	[Attribute("0.45", UIWidgets.Auto, desc: "Multiplies spawn rate of rare items (generally weapons, NVGs/thermals etc)", category: "Dynamic Loot - Loot Spawning")]
+	[Attribute("0.45", UIWidgets.Auto, desc: "Multiplies spawn rate of rare items (generally modern weapons, NVGs/thermals etc)", category: "Dynamic Loot - Entity Catalogs")]
 	float rareItemTypesMultiplier;
-	ref array<SCR_EArsenalItemType> rareItemTypes = {
-		SCR_EArsenalItemType.RIFLE,
-		SCR_EArsenalItemType.VEST_AND_WAIST,
-		SCR_EArsenalItemType.WEAPON_ATTACHMENT,
-		SCR_EArsenalItemType.SNIPER_RIFLE,
-		SCR_EArsenalItemType.MACHINE_GUN,
-		SCR_EArsenalItemType.ROCKET_LAUNCHER,
-		SCR_EArsenalItemType.RADIO_BACKPACK,
-		SCR_EArsenalItemType.EXPLOSIVES,
-		SCR_EArsenalItemType.LETHAL_THROWABLE
-	};
+	[Attribute("", uiwidget: UIWidgets.SearchComboBox, enums: ParamEnumArray.FromEnum(SCR_EArsenalItemType), desc: "Rare item multiplier is applied to included types", category: "Dynamic Loot - Loot Categorization")]
+	ref array<SCR_EArsenalItemType> rareItemTypes;
 	
 	ref array<SCR_EArsenalItemType> itemBlacklist = {
 		SCR_EArsenalItemType.MORTARS,
@@ -131,12 +92,15 @@ class DL_LootSystem : WorldSystem
 	// list of spawn components in the world, each will be checked if it should be a "lootable" and spawn a container prefab if so
 	ref array<DL_LootSpawnComponent> spawnComponents = {};
 	ref array<DL_LootSpawn> spawns = {};
-	ref array<ResourceName> processedResources = {};
+	
+	// list of processed resource names, grouped by FactionKey of the catalog they originated from
+	ref map<ResourceName, FactionKey> processedResources = new map<ResourceName, FactionKey>();
 	
 	// raw weighted loot data lists of evaluated entity catalog items based on their arsenal supply costs
 	bool lootDataReady = false;
 	ref array<SCR_EntityCatalogEntry> lootData = {};
 	ref SCR_WeightedArray<SCR_EntityCatalogEntry> lootDataWeighted = new SCR_WeightedArray<SCR_EntityCatalogEntry>();
+	ref map<DL_LootCategory, ref SCR_WeightedArray<SCR_EntityCatalogEntry>> categoryLootData = new map<DL_LootCategory, ref SCR_WeightedArray<SCR_EntityCatalogEntry>>();
 	ref SCR_EntityCatalog lootCatalog;
 	
 	bool vehicleDataReady = false;
@@ -146,6 +110,12 @@ class DL_LootSystem : WorldSystem
 	ref array<EEntityCatalogType> labels = {
 		EEntityCatalogType.ITEM,
 	};
+	
+	ref array<DL_LootSpawnCategoryProviderComponent> categoryProviders = {};
+	ref array<DL_LootSpawnRarityProviderComponent> rarityProviders = {};
+	
+	vector worldMins;
+	vector worldMaxs;
 	
 	void DL_LootSystem()
 	{
@@ -163,8 +133,16 @@ class DL_LootSystem : WorldSystem
 	
 	override void OnInit()
 	{
-		GetGame().GetCallqueue().Call(ReadLootCatalogs);
-		GetGame().GetCallqueue().Call(ReadVehicleCatalogs);
+		// init category-specific loot data sets
+		array<DL_LootCategory> categories = {};
+		SCR_Enum.GetEnumValues(DL_LootCategory, categories);
+		foreach (DL_LootCategory category : categories)
+			categoryLootData.Insert(category, new SCR_WeightedArray<SCR_EntityCatalogEntry>());
+		
+		
+		GetGame().GetWorld().GetBoundBox(worldMins, worldMaxs);
+		callQueue.Call(ReadLootCatalogs);
+		callQueue.Call(ReadVehicleCatalogs);
 	}
 	
 	static DL_LootSystem GetInstance()
@@ -241,6 +219,7 @@ class DL_LootSystem : WorldSystem
 		return trigger;
 	}
 	
+	// owner is parent of trigger/container
 	void CreateLootContainer(IEntity owner)
 	{
 		vector mins;
@@ -258,6 +237,33 @@ class DL_LootSystem : WorldSystem
 		
 		ref DL_LootSpawn spawn = DL_LootSpawn.Cast(GetGame().SpawnEntityPrefabEx("{1DAAEE444AEA4BB5}Prefabs/DL_LootContainer.et", true, null, params));
 		spawns.Insert(spawn);
+		
+		DL_LootSpawnComponent comp = DL_LootSpawnComponent.Cast(owner.FindComponent(DL_LootSpawnComponent));
+		
+		// copy category filter specified directly on component
+		if (comp && !spawn.categoryFilter.Count() && comp.categoryFilter)
+			spawn.categoryFilter.Copy(comp.categoryFilter);
+		
+		// otherwise evaluate category filter based on providers in proximity
+		if (!spawn.categoryFilter.Count())
+		{
+			// check registered category providers and apply categories of nearest/most direct
+			DL_LootSpawnCategoryProviderComponent categoryProvider = GetSpawnCategoryProvider(spawn);
+			if (categoryProvider && categoryProvider.categories.Count())
+				spawn.categoryFilter.Copy(categoryProvider.categories);
+			// fallback to rural category when no providers in proximity
+			else
+				spawn.categoryFilter = {DL_LootCategory.RURAL};
+		}
+		
+		// look for nearest rarity provider and multiply max supply value by its multiplier / distance from provider
+		DL_LootSpawnRarityProviderComponent rarityProvider = GetSpawnRarityProvider(spawn);
+		if (rarityProvider)
+			spawn.maxSupplyValue *= rarityProvider.multiplier / Math.Max(1, vector.Distance(rarityProvider.GetOwner().GetOrigin(), spawn.GetOrigin()) / rarityProvider.radius);
+		else
+		{
+			spawn.maxSupplyValue *= 20 / Math.Max(1, vector.Distance((worldMins + worldMaxs) * 0.5, spawn.GetOrigin()) / 1000);
+		}
 		
 		// set spawn volume based on parent bbox volume which should roughly represent its physical space in world
 		SCR_UniversalInventoryStorageComponent storage = SCR_UniversalInventoryStorageComponent.Cast(spawn.FindComponent(SCR_UniversalInventoryStorageComponent));
@@ -278,7 +284,70 @@ class DL_LootSystem : WorldSystem
 			return;
 		
 		OnContainerToggled(spawn, false);
+	}
+	
+	DL_LootSpawnCategoryProviderComponent GetSpawnCategoryProvider(DL_LootSpawn spawn)
+	{
+		vector position = spawn.GetOrigin();
+		ref DL_LootSpawnCategoryProviderComponent closestGenericProvider;
+		ref DL_LootSpawnCategoryProviderComponent closest;
+		float closestDistance = float.MAX;
 
+		foreach (DL_LootSpawnCategoryProviderComponent provider : categoryProviders)
+		{
+			// skip providers that didn't detect any categories for themselves
+			if (!provider.categories.Count())
+				continue;
+			
+			float distance = vector.Distance(provider.GetOwner().GetOrigin(), position);
+			if (distance < closestDistance && distance <= provider.radius)
+			{
+				closestDistance = distance;
+				closest = provider;
+				
+				if (provider.categories.Contains(DL_LootCategory.URBAN) || provider.categories.Contains(DL_LootCategory.RURAL))
+					closestGenericProvider = provider;
+			}
+		}
+		
+		// copy closest generic provider category to closest if not generic
+		// to combine e.g. a city's URBAN category with the COMMERCIAL category of a shop in the city
+		if (closest != closestGenericProvider && closestGenericProvider && closestGenericProvider.categories.Count())
+			closest.categories.Insert(closestGenericProvider.categories[0]);
+		
+		//if (closest)
+		//	PrintFormat("DL_LootSystem: %1 found category provider %2 (%3m) with categories %4", spawn, closest.GetOwner(), closestDistance, closest.categories);
+		
+		
+		return closest;
+	}
+	
+	DL_LootSpawnRarityProviderComponent GetSpawnRarityProvider(DL_LootSpawn spawn)
+	{
+		if (!rarityProviders.Count())
+		{
+			PrintFormat("DL_LootSystem: Defaulting to 20x rarity multiplier at world center due to no rarity providers found in-world, add instances of `DL_LootSpawnProvider.et` to your world to suppress this warning.", level: LogLevel.WARNING);
+			return null;
+		}
+		
+		vector position = spawn.GetOrigin();
+		ref DL_LootSpawnRarityProviderComponent closest;
+		float closestDistance = float.MAX;
+
+		foreach (DL_LootSpawnRarityProviderComponent provider : rarityProviders)
+		{
+			float distance = vector.Distance(provider.GetOwner().GetOrigin(), position);
+			if (distance < closestDistance)
+			{
+				closestDistance = distance;
+				closest = provider;
+			}
+		}
+		
+		//if (closest)
+		//	PrintFormat("DL_LootSystem: %1 found rarity provider %2 (%3m) with max mult = %4", spawn, closest.GetOwner(), closestDistance, closest.multiplier);
+
+		return closest;
 	}
 	
 	void HandleManagerChanged(InventoryStorageManagerComponent manager)
@@ -304,13 +373,12 @@ class DL_LootSystem : WorldSystem
 		entityCatalog.SetCatalogType(EEntityCatalogType.ITEM);
 		entityCatalog.SetEntityList({});
 		
-		array<SCR_EntityCatalogEntry> entries = {};
 		array<Faction> factions = {};
 		GetGame().GetFactionManager().GetFactionsList(factions);
-		foreach(Faction f : factions)
+		foreach (Faction f : factions)
 		{
 			SCR_Faction fact = SCR_Faction.Cast(f);
-			if (!fact)
+			if (!fact || factionBlacklist.Contains(f.GetFactionKey()))
 				continue;
 
 			SCR_EntityCatalog factionCatalog = fact.GetFactionEntityCatalogOfType(EEntityCatalogType.ITEM);
@@ -324,80 +392,178 @@ class DL_LootSystem : WorldSystem
 				continue;
 			
 			// merge faction catalog into global catalog by ref
-			entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef(), factionCatalog.GetCatalogType());
+			entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef(), factionCatalog.GetCatalogType(), f.GetFactionKey());
 		}
 		
 		entityCatalog.GetEntityList(lootData);
 		if (lootData.IsEmpty())
 			return null;
 		
-		PrintFormat("DL_LootSystem: Found %1 items in %2 EntityCatalogs", lootData.Count(), factions.Count());
+		PrintFormat("DL_LootSystem: Found %1 items in EntityCatalogs from %2 factions, calculating entry weights...", lootData.Count(), factions.Count());
 		lootCatalog = entityCatalog;
-		lootDataWeighted = CalculateEntryWeights(lootData);
+		
+		// @TODO add a means for weighting Vehicles based on SCR_EditableVehicleComponent's "CAMPAIGN" budget cost
+		lootDataWeighted = new SCR_WeightedArray<SCR_EntityCatalogEntry>();
+		foreach(SCR_EntityCatalogEntry entry : lootData)
+		{
+			float weight = CalculateEntryWeight(entry);
+			if (!weight)
+				continue;
+			
+		 	lootDataWeighted.Insert(entry, weight);
+			
+			array<string> categoryNames = {};
+			array<DL_LootCategory> categories = CategorizeEntry(entry);
+			if (categories.Count())
+			{
+				foreach (DL_LootCategory category : categories)
+				{
+					SCR_WeightedArray<SCR_EntityCatalogEntry> categoryData = categoryLootData.Get(category);
+					if (!categoryData)
+					{
+						PrintFormat("DL_LootSystem: Unable to find category %1 in categoryLootData for %2!", SCR_Enum.GetEnumName(DL_LootCategory, category), entry, level: LogLevel.ERROR);
+						categoryLootData.Get(DL_LootCategory.RURAL).Insert(entry, weight);
+						break;
+					}
+					else
+					{
+						categoryNames.Insert(SCR_Enum.GetEnumName(DL_LootCategory, category));
+						categoryData.Insert(entry, weight);
+					}
+				}
+			}
+			
+			PrintFormat("DL_LootSystem: [%3](%4) Item %1 = %2 weight", entry.GetPrefab(), weight, processedResources.Get(entry.GetPrefab()), categoryNames);
+		}
+		
 		lootDataReady = true;
 		Event_LootCatalogsReady.Invoke(lootDataWeighted);
 		
 		return entityCatalog;
 	}
 	
-	SCR_WeightedArray<SCR_EntityCatalogEntry> CalculateEntryWeights(array<SCR_EntityCatalogEntry> entries)
+	array<DL_LootCategory> CategorizeEntry(SCR_EntityCatalogEntry entry)
 	{
-		// @TODO add a means for weighting Vehicles based on SCR_EditableVehicleComponent's "CAMPAIGN" budget cost
-		ref SCR_WeightedArray<SCR_EntityCatalogEntry> data = new SCR_WeightedArray<SCR_EntityCatalogEntry>();
-		foreach(SCR_EntityCatalogEntry entry : entries)
+		ref array<DL_LootCategory> categories = {};
+		SCR_ArsenalItem item = SCR_ArsenalItem.Cast(entry.GetEntityDataOfType(SCR_ArsenalItem));
+		if (!item)
+			return {DL_LootCategory.RURAL};
+		
+		SCR_EArsenalItemType itemType = item.GetItemType();
+		SCR_EArsenalItemMode itemMode = item.GetItemMode();
+		FactionKey factionKey = processedResources.Get(entry.GetPrefab());
+		SCR_Faction faction = SCR_Faction.Cast(GetGame().GetFactionManager().GetFactionByKey(factionKey));
+		
+		if (
+			(
+				faction.IsMilitary()
+				&& militaryItemTypes.Contains(itemType)
+			)
+			|| item.GetItemResourceName().Contains("Equipment/Tripods")
+			|| item.GetItemResourceName().Contains("Equipment/Mortars")
+			|| item.GetItemResourceName().Contains("Items/NVG")
+		)
 		{
-			float value = 1;
-			SCR_ArsenalItem item = SCR_ArsenalItem.Cast(entry.GetEntityDataOfType(SCR_ArsenalItem));
-			if (!item)
-				continue;
+			categories.Insert(DL_LootCategory.MILITARY);
 			
-			SCR_EArsenalItemType itemType = item.GetItemType();
-			if (!itemType || itemBlacklist.Contains(itemType))
-				continue;
-			
-			SCR_EArsenalItemMode itemMode = item.GetItemMode();
-			if (
-				itemMode == SCR_EArsenalItemMode.WEAPON
-				|| itemMode == SCR_EArsenalItemMode.WEAPON_VARIANTS
-				|| itemMode == SCR_EArsenalItemMode.ATTACHMENT
-			)
-				item.PostInitData(entry);
-			
-			value = Math.Max(item.GetSupplyCost(SCR_EArsenalSupplyCostType.DEFAULT) + item.GetSupplyCost(SCR_EArsenalSupplyCostType.GADGET_ARSENAL), 1);
-						
-			if (commonItemTypes.Contains(itemType))
-				value = value / commonItemTypesMultiplier;
-			
-			if (uncommonItemTypes.Contains(itemType))
-				value = value / uncommonItemTypesMultiplier;
-				
-			// @TODO figure out a clean way to categorize stuff like NVGs/thermals as rare
-			if (rareItemTypes.Contains(itemType))
-				value = value / rareItemTypesMultiplier;
-			
-			if (
-				itemMode == SCR_EArsenalItemMode.AMMUNITION
-				&& itemType != SCR_EArsenalItemType.MACHINE_GUN // already common enough to find more than you can carry
-				&& itemType != SCR_EArsenalItemType.ROCKET_LAUNCHER // same as above
-			)
-				value = value / ammoMultiplier;	
-					
-			if (itemMode == SCR_EArsenalItemMode.ATTACHMENT || itemType == SCR_EArsenalItemType.WEAPON_ATTACHMENT)
-				value = value / attachmentMultiplier;
-			
-			// base item rarity on inverse of supply cost % of 10k to create some headroom
-			// for multiplier differences
-			// e.g.
-			// 10000 - (60 supply) = 9940 weight
-			// 10000 - (320 supply) = 9680 weight
-			// 10000 - (470 supply) = 9530 weight
-			// 10000 - (1240 supply) = 8760 weight
-			
-			float weight = lootSupplyValueCap - (Math.Min(Math.Max(value, 1) * scarcityMultiplier, lootSupplyValueCap) / lootSupplyValueCap * 1000);
-			data.Insert(entry, weight);
+			// only allow items tagged as MILITARY but also as civ to also spawn in non-military spawns
+			// e.g. old/basic weapons beloning to FIA should be findable in URBAN or RURAL areas
+			// otherwise return out early with just MILITARY category for all other military items
+			if (!civilianGearTypes.Contains(itemType) && !civilianGearFactions.Contains(factionKey))
+				return categories;
 		}
 		
-		return data;
+		if (policeItemTypes.Contains(itemType))
+			categories.Insert(DL_LootCategory.POLICE);
+		
+		if (medicalItemTypes.Contains(itemType))
+			categories.Insert(DL_LootCategory.MEDICAL);
+		
+		if (industrialItemTypes.Contains(itemType))
+			categories.Insert(DL_LootCategory.INDUSTRIAL);
+		
+		if (commercialItemTypes.Contains(itemType))
+			categories.Insert(DL_LootCategory.COMMERCIAL);
+		
+		if (
+			commonItemTypes.Contains(itemType)
+			|| (
+				uncommonItemTypes.Contains(itemType)
+				&& (civilianGearFactions.Contains(factionKey) && civilianGearTypes.Contains(itemType))
+			)
+		)
+			categories.Insert(DL_LootCategory.URBAN);
+		
+		if (
+			commonItemTypes.Contains(itemType)
+			|| (civilianGearFactions.Contains(factionKey) && civilianGearTypes.Contains(itemType))
+		)
+			categories.Insert(DL_LootCategory.RURAL);
+		
+		// fallback for gear that doesn't fit into any specific category, allow spawning in urban and rural
+		if (!categories.Count())
+		{
+			categories.Insert(DL_LootCategory.URBAN);
+			categories.Insert(DL_LootCategory.RURAL);
+		}
+		
+		return categories;
+	}
+	
+	float CalculateEntryWeight(SCR_EntityCatalogEntry entry)
+	{
+		float value = 1;
+		SCR_ArsenalItem item = SCR_ArsenalItem.Cast(entry.GetEntityDataOfType(SCR_ArsenalItem));
+		if (!item)
+			return 0;
+		
+		SCR_EArsenalItemType itemType = item.GetItemType();
+		if (!itemType || itemBlacklist.Contains(itemType))
+			return 0;
+		
+		SCR_EArsenalItemMode itemMode = item.GetItemMode();
+		if (
+			itemMode == SCR_EArsenalItemMode.WEAPON
+			|| itemMode == SCR_EArsenalItemMode.WEAPON_VARIANTS
+			|| itemMode == SCR_EArsenalItemMode.ATTACHMENT
+		)
+			item.PostInitData(entry);
+		
+		value = Math.Max(item.GetSupplyCost(SCR_EArsenalSupplyCostType.DEFAULT), 1);
+					
+		if (commonItemTypes.Contains(itemType))
+			value = value / commonItemTypesMultiplier;
+		
+		if (uncommonItemTypes.Contains(itemType))
+			value = value / uncommonItemTypesMultiplier;
+
+		if (rareItemTypes.Contains(itemType) || item.GetItemResourceName().Contains("Items/NVG"))
+			value = value / rareItemTypesMultiplier;
+		
+		if (itemMode == SCR_EArsenalItemMode.CONSUMABLE)
+			value = value / consumableMultiplier;	
+				
+		if (
+			itemMode == SCR_EArsenalItemMode.AMMUNITION
+			&& itemType != SCR_EArsenalItemType.MACHINE_GUN // already common enough to find more than you can carry
+			&& itemType != SCR_EArsenalItemType.ROCKET_LAUNCHER // same as above
+		)
+			value = value / ammoMultiplier;	
+				
+		if (itemMode == SCR_EArsenalItemMode.ATTACHMENT || itemType == SCR_EArsenalItemType.WEAPON_ATTACHMENT)
+			value = value / attachmentMultiplier;
+		
+		// base item rarity on inverse of supply cost of 10k to create some headroom
+		// for multiplier differences
+		// e.g.
+		// 10000 - (60 supply) = 9940 weight
+		// 10000 - (320 supply) = 9680 weight
+		// 10000 - (470 supply) = 9530 weight
+		// 10000 - (1240 supply) = 8760 weight
+		
+		float weight = lootSupplyValueCap - Math.Min(Math.Max(value, 1) * scarcityMultiplier, lootSupplyValueCap);
+		
+		return weight;
 	}
 	
 	ref ScriptInvoker Event_VehicleCatalogsReady = new ScriptInvoker;
@@ -409,7 +575,7 @@ class DL_LootSystem : WorldSystem
 
 		array<Faction> factions = {};
 		GetGame().GetFactionManager().GetFactionsList(factions);
-		foreach(Faction f : factions)
+		foreach (Faction f : factions)
 		{
 			SCR_Faction fact = SCR_Faction.Cast(f);
 			if (!fact)
@@ -417,7 +583,7 @@ class DL_LootSystem : WorldSystem
 			
 			SCR_EntityCatalog factionCatalog = fact.GetFactionEntityCatalogOfType(EEntityCatalogType.VEHICLE);
 			if (factionCatalog)
-				entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef(), factionCatalog.GetCatalogType());
+				entityCatalog.MergeEntityListRef(factionCatalog.GetEntityListRef(), factionCatalog.GetCatalogType(), f.GetFactionKey());
 		}
 
 		entityCatalog.GetEntityList(vehicleData);
@@ -430,4 +596,20 @@ class DL_LootSystem : WorldSystem
 		
 		return entityCatalog;
 	}
+}
+
+enum DL_LootCategory {
+	// RURAL and URBAN are generic area categories that can apply to a spawn in combination with one of the specific categories below
+	// at least one of these categories will always be set for an item and both always include common item types + items matching "civilian" faction and type whitelists
+	RURAL,
+	URBAN,
+	
+	// optional specific area category that can be combined with generic categories above
+	// e.g. factory in a city will be URBAN + INDUSTRIAL, farms will be RURAL + INDUSTRIAL
+	// military bases will generally always be URBAN + MILITARY
+	MILITARY,
+	POLICE,
+	MEDICAL,
+	INDUSTRIAL,
+	COMMERCIAL
 }

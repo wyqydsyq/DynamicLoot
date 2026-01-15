@@ -46,7 +46,7 @@ DL_LootSpawn {
      Position PointInfo "{66B435AB718DF2AA}" {
      }
      Radius 3
-     Height 0
+     Height 1
      LineOfSightCheck 1
     }
    }
@@ -58,7 +58,7 @@ DL_LootSpawn {
      UIInfo UIInfo "{66B4818436AF070D}" {
       Name "Loot"
      }
-     VisibilityRange 1
+     VisibilityRange 2
      Duration 0.5
     }
    }

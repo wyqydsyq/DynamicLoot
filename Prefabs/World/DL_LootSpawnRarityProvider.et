@@ -1,0 +1,10 @@
+GenericEntity {
+ ID "685E59CF94510D36"
+ components {
+  DL_LootSpawnRarityProviderComponent "{685E59CF75449DE5}" {
+  }
+  Hierarchy "{685E59CF73A3596A}" {
+  }
+ }
+ Flags 0x400 0
+}

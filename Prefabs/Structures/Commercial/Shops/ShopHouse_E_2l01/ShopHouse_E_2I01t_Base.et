@@ -1,0 +1,11 @@
+SCR_DestructibleBuildingEntity : "{A43A100E3C377DB2}Prefabs/Structures/Core/Building_Base.et" {
+ ID "F0DBA538AC2A0552"
+ components {
+  DL_LootSpawnCategoryProviderComponent "{685E556AF18E0DD4}" {
+  }
+  SCR_MapDescriptorComponent "{685E556A89D3FE40}" {
+   VisibleOnMap 0
+   MainType Store
+  }
+ }
+}

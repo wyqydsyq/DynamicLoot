@@ -1,0 +1,11 @@
+SCR_DestructibleBuildingEntity : "{A43A100E3C377DB2}Prefabs/Structures/Core/Building_Base.et" {
+ ID "F0DBA538AC2A0552"
+ components {
+  DL_LootSpawnCategoryProviderComponent "{685E599EB2C3F74C}" {
+  }
+  SCR_MapDescriptorComponent "{685E599EB4090FEC}" {
+   VisibleOnMap 0
+   MainType "Fuel Station"
+  }
+ }
+}
