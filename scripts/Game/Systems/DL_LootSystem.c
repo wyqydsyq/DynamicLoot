@@ -156,10 +156,6 @@ class DL_LootSystem : WorldSystem
 	
 	override void OnUpdate(ESystemPoint point)
 	{
-		
-		if (!Replication.IsServer())
-			return;
-		
 		float time = GetGame().GetWorld().GetFixedTimeSlice();
 		callQueue.Tick(0.001 * time);
 		lastTickTime += time;
@@ -167,17 +163,23 @@ class DL_LootSystem : WorldSystem
 			return;
 		lastTickTime = 0;
 		
+		if (!Replication.IsServer())
+			return;
+		
 		if (!enableLootSpawning)
 			return;
 		
 		// create trigger prefabs for each eligible spawner component
 		// limit per tick to avoid tanking server too hard at start
 		// as some maps will easily have 10k+ spawns to process, doing all that at once is bad
-		for(int i; i < Math.Min(100, spawnComponents.Count()); i++)
+		for (int i; i < Math.Min(100, spawnComponents.Count()); i++)
 		{
 			DL_LootSpawnComponent comp = spawnComponents[i];
 			if (!comp)
+			{
+				spawnComponents.Remove(i);
 				continue;
+			}
 			
 			if (CanSpawnLoot(comp.GetOwner().ToString()))
 				CreateContainerTrigger(comp.GetOwner());
@@ -278,12 +280,6 @@ class DL_LootSystem : WorldSystem
 		//spawn.SetObject(vobj, "");
 		//spawn.SetFlags(~EntityFlags.VISIBLE);
 		//spawn.SetOrigin(owner.GetOrigin());
-		
-		SCR_UniversalInventoryStorageComponent inv = SCR_UniversalInventoryStorageComponent.Cast(spawn.FindComponent(SCR_UniversalInventoryStorageComponent));
-		if (!inv)
-			return;
-		
-		OnContainerToggled(spawn, false);
 	}
 	
 	DL_LootSpawnCategoryProviderComponent GetSpawnCategoryProvider(DL_LootSpawn spawn)
@@ -318,7 +314,6 @@ class DL_LootSystem : WorldSystem
 		//if (closest)
 		//	PrintFormat("DL_LootSystem: %1 found category provider %2 (%3m) with categories %4", spawn, closest.GetOwner(), closestDistance, closest.categories);
 		
-		
 		return closest;
 	}
 	
@@ -348,22 +343,6 @@ class DL_LootSystem : WorldSystem
 		//	PrintFormat("DL_LootSystem: %1 found rarity provider %2 (%3m) with max mult = %4", spawn, closest.GetOwner(), closestDistance, closest.multiplier);
 
 		return closest;
-	}
-	
-	void HandleManagerChanged(InventoryStorageManagerComponent manager)
-	{}
-	
-	void OnContainerToggled(DL_LootSpawn spawn, bool open = false)
-	{
-		/*SCR_UniversalInventoryStorageComponent inv = SCR_UniversalInventoryStorageComponent.Cast(spawn.FindComponent(SCR_UniversalInventoryStorageComponent));
-		if (!inv)
-			return;
-		
-		SCR_ItemAttributeCollection attr = SCR_ItemAttributeCollection.Cast(inv.GetAttributes());
-		if (!attr)
-			return;
-		
-		attr.SetIsVisible(open);*/
 	}
 	
 	ref ScriptInvoker Event_LootCatalogsReady = new ScriptInvoker;
@@ -404,7 +383,7 @@ class DL_LootSystem : WorldSystem
 		
 		// @TODO add a means for weighting Vehicles based on SCR_EditableVehicleComponent's "CAMPAIGN" budget cost
 		lootDataWeighted = new SCR_WeightedArray<SCR_EntityCatalogEntry>();
-		foreach(SCR_EntityCatalogEntry entry : lootData)
+		foreach (SCR_EntityCatalogEntry entry : lootData)
 		{
 			float weight = CalculateEntryWeight(entry);
 			if (!weight)
@@ -466,9 +445,10 @@ class DL_LootSystem : WorldSystem
 		{
 			categories.Insert(DL_LootCategory.MILITARY);
 			
-			// only allow items tagged as MILITARY but also as civ to also spawn in non-military spawns
-			// e.g. old/basic weapons beloning to FIA should be findable in URBAN or RURAL areas
-			// otherwise return out early with just MILITARY category for all other military items
+			// restrict items tagged as MILITARY but not considered "civilian" to military spawns
+			// e.g. old/basic weapons beloning to FIA should also be findable in POLICE, URBAN or RURAL areas
+			// otherwise return out early with only MILITARY category for all other military items
+			// so they are exclusive to areas categorized as military
 			if (!civilianGearTypes.Contains(itemType) && !civilianGearFactions.Contains(factionKey))
 				return categories;
 		}
@@ -560,7 +540,6 @@ class DL_LootSystem : WorldSystem
 		// 10000 - (320 supply) = 9680 weight
 		// 10000 - (470 supply) = 9530 weight
 		// 10000 - (1240 supply) = 8760 weight
-		
 		float weight = lootSupplyValueCap - Math.Min(Math.Max(value, 1) * scarcityMultiplier, lootSupplyValueCap);
 		
 		return weight;
@@ -569,7 +548,7 @@ class DL_LootSystem : WorldSystem
 	ref ScriptInvoker Event_VehicleCatalogsReady = new ScriptInvoker;
 	SCR_EntityCatalog ReadVehicleCatalogs()
 	{
-		SCR_EntityCatalog entityCatalog = new SCR_EntityCatalog();
+		ref SCR_EntityCatalog entityCatalog = new SCR_EntityCatalog();
 		entityCatalog.SetCatalogType(EEntityCatalogType.VEHICLE);
 		entityCatalog.SetEntityList({});
 

@@ -1,18 +1,6 @@
 [BaseContainerProps(configRoot: true), SCR_BaseContainerCustomEntityCatalogCatalog(EEntityCatalogType, "m_eEntityCatalogType", "m_aEntityEntryList", "m_aMultiLists")]
 modded class SCR_EntityCatalog
 {
-	// copy local entity list into provided entity list
-	/*int MergeEntityList(notnull out array<SCR_EntityCatalogEntry> entityList)
-	{
-		foreach (SCR_EntityCatalogEntry entityEntry : m_aEntityEntryList)
-		{
-			entityList.Insert(entityEntry);
-			m_mPrefabIndexes.Insert(entityEntry.GetPrefab(), m_aEntityEntryList.Find(entityEntry));
-		}
-			
-		return entityList.Count();
-	}*/
-	
 	// copy provided entity list into local entity list, omitting any resources already processed by loot system
 	int MergeEntityListRef(notnull array<ref SCR_EntityCatalogEntry> entityList, EEntityCatalogType catalogType, FactionKey faction)
 	{

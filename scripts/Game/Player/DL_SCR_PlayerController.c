@@ -16,9 +16,6 @@ modded class SCR_PlayerController : PlayerController
 		if (!spawn)
 			return;
 		
-		DL_LootSystem sys = DL_LootSystem.GetInstance();
-		sys.OnContainerToggled(spawn, true);
-		
 		spawn.SpawnLoot();
 		
 		SCR_PlayerController pc = SCR_PlayerController.Cast(GetGame().GetPlayerManager().GetPlayerController(playerId));
@@ -43,7 +40,6 @@ modded class SCR_PlayerController : PlayerController
 		
 		ChimeraCharacter char = ChimeraCharacter.Cast(GetControlledEntity());
 		SCR_InventoryStorageManagerComponent manager = SCR_InventoryStorageManagerComponent.Cast(char.GetCharacterController().GetInventoryStorageManager());
-		DL_LootSystem sys = DL_LootSystem.GetInstance();
 		
 		CharacterVicinityComponent vicinity = CharacterVicinityComponent.Cast(char.FindComponent(CharacterVicinityComponent));
 		if (!vicinity)
@@ -51,7 +47,6 @@ modded class SCR_PlayerController : PlayerController
 		
 		vicinity.SetItemOfInterest(spawn);
 		
-		//sys.OnContainerToggled(spawn, true);
 		manager.SetStorageToOpen(spawn);
 		manager.SetLootStorage(spawn);
 		manager.OpenInventory();
