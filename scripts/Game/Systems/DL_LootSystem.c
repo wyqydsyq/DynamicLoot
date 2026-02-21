@@ -441,6 +441,8 @@ class DL_LootSystem : WorldSystem
 			|| item.GetItemResourceName().Contains("Equipment/Tripods")
 			|| item.GetItemResourceName().Contains("Equipment/Mortars")
 			|| item.GetItemResourceName().Contains("Items/NVG")
+			|| item.GetItemResourceName().Contains("Nightvision")
+			|| item.GetItemResourceName().Contains("Thermal")
 		)
 		{
 			categories.Insert(DL_LootCategory.MILITARY);
@@ -517,7 +519,7 @@ class DL_LootSystem : WorldSystem
 		if (uncommonItemTypes.Contains(itemType))
 			value = value / uncommonItemTypesMultiplier;
 
-		if (rareItemTypes.Contains(itemType) || item.GetItemResourceName().Contains("Items/NVG"))
+		if (rareItemTypes.Contains(itemType))
 			value = value / rareItemTypesMultiplier;
 		
 		if (itemMode == SCR_EArsenalItemMode.CONSUMABLE)
