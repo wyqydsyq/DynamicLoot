@@ -292,7 +292,7 @@ class DL_LootSystem : WorldSystem
 		foreach (DL_LootSpawnCategoryProviderComponent provider : categoryProviders)
 		{
 			// skip providers that didn't detect any categories for themselves
-			if (!provider.categories.Count())
+			if (!provider || !provider.categories || !provider.categories.Count())
 				continue;
 			
 			float distance = vector.Distance(provider.GetOwner().GetOrigin(), position);
